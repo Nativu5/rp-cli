@@ -89,10 +89,26 @@ The repository has clear file targets for the next implementation phase
 
 ## Current Next Step
 
-All planned MVP phases are complete; next step is review, cleanup, and release-readiness hardening.
+All planned MVP phases are complete; next step is P1 release-readiness hardening.
+
+## Release-Readiness Hardening
+
+- [x] P0: Declare the Node runtime contract for local TypeScript module loading.
+- [x] P0: Reject unsupported module file extensions before import.
+- [x] P0: Reject state files owned by a different module with `MODULE_STATE_MISMATCH`.
+- [x] P0: Reject cross-module migrations.
+- [x] P0: Pass action and summary handlers a deep-frozen clone of state so direct mutation cannot bypass JSON Patch.
+- [x] P1: Replace the hand-written lockfile implementation with `proper-lockfile`.
+- [x] P1: Recover stale state locks and briefly wait for active locks to release.
+- [ ] P1: Add dist/bin package smoke tests and CI.
+- [ ] P1: Add project config / upward discovery.
+- [ ] P1: Add user-facing lock diagnostics and configurable lock timing.
 
 ## Architecture Notes
 
 - `@rp-cli/core` is the public creator API. It should expose `defineModule` and creator-facing types only.
 - `@rp-cli/core/internal` is the CLI/runtime API. It exposes module loading, module parsing, state file helpers, validation, logging, schema, action, summary, patch, and migration helpers.
 - Unknown module exports must be parsed with `parseModule(value: unknown)` instead of casting at the call site.
+- Runtime module loading currently supports `.ts`, `.mts`, `.js`, `.mjs`, and `.cjs` module files on Node `>=24.0.0`.
+- State files are bound to module identity via `rp.module`; schema evolution remains driven by `rp.schemaVersion`.
+- State write locking uses `proper-lockfile` with an atomic `mkdir` lock directory at `<state>.lock`, stale lock recovery, and bounded retries.

@@ -366,6 +366,33 @@ describe("write commands", () => {
       }
     });
   });
+
+  it("rejects actions that directly mutate state outside JSON Patch", async () => {
+    const workspace = await createWorkspace();
+    await initWorkspace(workspace);
+
+    const result = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--state",
+      workspace.statePath,
+      "action",
+      "mutateState",
+      "{}"
+    ]);
+
+    expect(result.exitCode).toBe(6);
+    expect(result.json).toMatchObject({
+      error: {
+        code: "ACTION_RUNTIME_ERROR"
+      }
+    });
+    await expectState(workspace.statePath, {
+      value: "ready",
+      count: 1,
+      memories: []
+    });
+  });
 });
 
 async function createWorkspace(): Promise<{
@@ -435,6 +462,14 @@ async function createWorkspace(): Promise<{
       '      description: "Return schema-invalid patch.",',
       "      input: z.object({}),",
       '      run: () => ({ patch: [{ op: "replace", path: "/count", value: "bad" }] })',
+      "    },",
+      "    mutateState: {",
+      '      description: "Mutate state directly.",',
+      "      input: z.object({}),",
+      "      run({ state }) {",
+      '        state.value = "mutated";',
+      "        return { patch: [] };",
+      "      }",
       "    },",
       "    explode: {",
       '      description: "Throw an error.",',

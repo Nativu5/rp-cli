@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
 import * as publicCoreApi from "@rp-cli/core";
 import { defineModule } from "@rp-cli/core";
 import { resolveRpPaths } from "@rp-cli/core/internal";
@@ -60,5 +61,19 @@ describe("scaffold", () => {
     expect("parseModule" in publicCoreApi).toBe(false);
     expect("loadModule" in publicCoreApi).toBe(false);
     expect("readStateFile" in publicCoreApi).toBe(false);
+  });
+
+  it("declares the Node runtime expected by TypeScript module loading", async () => {
+    const packageJsons = await Promise.all(
+      ["../package.json", "../packages/core/package.json", "../packages/cli/package.json"].map(
+        async (filePath) => JSON.parse(await readFile(new URL(filePath, import.meta.url), "utf8"))
+      )
+    );
+
+    for (const packageJson of packageJsons) {
+      expect(packageJson.engines).toEqual({
+        node: ">=24.0.0"
+      });
+    }
   });
 });

@@ -5,7 +5,7 @@ import {
   pathExists,
   RpError,
   validateAuthorState,
-  withFileLock,
+  withStateLock,
   writeJsonFileAtomic
 } from "@rp-cli/core/internal";
 import { runCommand } from "../commandRunner.js";
@@ -18,7 +18,7 @@ export function registerInitCommand(program: Command): void {
     .option("--force", "overwrite an existing state file")
     .action(async (options: { force?: boolean }, command) => {
       await runCommand(command, async ({ paths, pretty }) => {
-        await withFileLock(paths.lockPath, async () => {
+        await withStateLock(paths, async () => {
           if (!options.force && (await pathExists(paths.statePath))) {
             throw new RpError("WRITE_FAILED", `state file already exists: ${paths.statePath}`);
           }

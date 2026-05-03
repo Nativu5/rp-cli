@@ -13,7 +13,7 @@ import {
   validateActionInput,
   validateAuthorState,
   validateStateFile,
-  withFileLock,
+  withStateLock,
   writeJsonFileAtomic
 } from "@rp-cli/core/internal";
 import { readJsonInput } from "../jsonInput.js";
@@ -56,7 +56,7 @@ export function registerActionCommand(program: Command): void {
           });
           const input = validateActionInput(action, inputJson);
 
-          await withFileLock(paths.lockPath, async () => {
+          await withStateLock(paths, async () => {
             const envelope = validateStateFile(module, await readStateFile(paths.statePath));
             const ctx = createRuntimeContext();
             const result = await runAction({

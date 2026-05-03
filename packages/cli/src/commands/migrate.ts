@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import {
   appendJsonLogEntry,
+  assertModuleCompatibility,
   compareSchemaVersions,
   createRuntimeContext,
   hashState,
@@ -10,7 +11,7 @@ import {
   runMigration,
   updateStateEnvelope,
   validateAuthorState,
-  withFileLock,
+  withStateLock,
   writeJsonFileAtomic
 } from "@rp-cli/core/internal";
 import { runCommand } from "../commandRunner.js";
@@ -22,9 +23,10 @@ export function registerMigrateCommand(program: Command): void {
     .description("Migrate state to the current schema version.")
     .action(async (_options, command) => {
       await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
-        await withFileLock(paths.lockPath, async () => {
+        await withStateLock(paths, async () => {
           const module = await loadModule(paths.modulePath);
           const envelope = await readStateFile(paths.statePath);
+          assertModuleCompatibility(envelope.rp, module);
           const fromVersion = envelope.rp.schemaVersion;
           const toVersion = module.state.version;
           const comparison = compareSchemaVersions(fromVersion, toVersion);

@@ -75,7 +75,9 @@ function exitCodeForError(error: unknown): number {
 }
 
 function isModuleError(code: RpErrorCode): boolean {
-  return code === "MODULE_NOT_FOUND" || code === "MODULE_INVALID";
+  return (
+    code === "MODULE_NOT_FOUND" || code === "MODULE_INVALID" || code === "MODULE_STATE_MISMATCH"
+  );
 }
 
 function isStateFileError(code: RpErrorCode): boolean {

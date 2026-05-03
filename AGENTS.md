@@ -101,7 +101,8 @@ import { loadModule, readStateFile } from "@rp-cli/core/internal";
 - `types.ts`: 定义 `RpModule`、`RpStateFile`、`RpMeta`、`RpAction`、`RpSummary`、`RpMigration`、`JsonPatch` 等公共类型。
 - `errors.ts`: 定义 `RpError`、错误码和统一错误 JSON 输出结构。
 - `validation.ts`: 校验 state envelope，并检查 `rp.schemaVersion` 与 `module.state.version`。
-- `stateFile.ts`: 解析 module/state/log/lock 文件路径，读取 state file，创建 envelope，提供原子 JSON 写入和基础 lock 文件机制。
+- `stateFile.ts`: 解析 module/state/log/lock 文件路径，读取 state file，创建 envelope，提供原子 JSON 写入。
+- `stateLock.ts`: 基于 `proper-lockfile` 提供 state write lock，支持 stale lock 恢复和短暂重试。
 - `patch.ts`: 使用 `fast-json-patch` 校验 JSON Patch。
 - `action.ts`: 查找 action 并校验 action 返回值基础结构。
 - `summary.ts`: 按 default/brief/第一个 summary 的规则查找 summary。
@@ -120,13 +121,13 @@ import { loadModule, readStateFile } from "@rp-cli/core/internal";
 - `output.ts`: 输出 JSON 和错误 JSON。
 - `commands/init.ts`: `rp init`，从 module defaults 初始化 state file，支持 `--force`。
 - `commands/validate.ts`: `rp validate`，验证 envelope、schemaVersion 和 author state。
-- `commands/migrate.ts`: `rp migrate` 命令骨架。
+- `commands/migrate.ts`: `rp migrate`，执行 schemaVersion 迁移，拒绝跨 module 迁移，支持 `--dry-run` 和日志记录。
 - `commands/state.ts`: `rp state`，输出 author state，支持 `--raw` 输出完整 envelope。
-- `commands/patch.ts`: `rp patch` 命令骨架。
+- `commands/patch.ts`: `rp patch`，应用标准 JSON Patch，验证 patch 后 state，支持 `--file`。
 - `commands/action.ts`: `rp action [name] [input]`，包含 `--list` 和 `--file`。
 - `commands/summary.ts`: `rp summary [name]`，包含 `--list`。
-- `commands/schema.ts`: `rp schema [target] [name]` 命令骨架。
-- `commands/log.ts`: `rp log` 命令骨架。
+- `commands/schema.ts`: `rp schema [target] [name]`，导出 state 或 action input JSON Schema。
+- `commands/log.ts`: `rp log`，读取 JSONL 审计日志，支持 `--limit`。
 
 不提供独立 `rp actions` 命令；能力发现使用 `rp action --list` 和 `rp summary --list`，单个 action input schema 使用 `rp schema action <name>`。
 
@@ -145,16 +146,14 @@ import { loadModule, readStateFile } from "@rp-cli/core/internal";
 
 测试入口：
 
-- `scaffold.test.ts`: 验证 workspace/CLI 命令骨架。
-- `runtime-foundations.test.ts`: 验证 Phase 2 的 core runtime foundation。
-- `state-lifecycle.test.ts`: 验证 Phase 3 的 `init`、`validate`、`state`、原子写入和 lock 行为。
-
-## 当前实现进度
-
-- Phase 1 Basic Scaffolding 已完成。
-- Phase 2 Core Runtime Foundations 已完成。
-- Phase 3 State Lifecycle Commands 已完成。
-- 当前下一阶段是 Phase 4：实现 `rp patch`、`rp action`、JSON Patch 应用、action input/return 校验和 action CLI 输出。
+- `scaffold.test.ts`: 验证 workspace/CLI 命令注册和 public API 边界。
+- `runtime-foundations.test.ts`: 验证 core runtime foundation、module loading、envelope 校验和 schema 导出。
+- `state-lifecycle.test.ts`: 验证 `init`、`validate`、`state`、原子写入和 lock 行为。
+- `write-commands.test.ts`: 验证 `patch`、`action`、dry-run、input/return 校验和 state mutation 防护。
+- `migration.test.ts`: 验证 migration、schemaVersion 行为和跨 module 拒绝。
+- `discovery-read-apis.test.ts`: 验证 `summary`、`schema` 和 read API。
+- `logging.test.ts`: 验证 JSONL audit log。
+- `life-sim-example.test.ts`: 验证示例模块端到端流程。
 
 ## 开发规则
 

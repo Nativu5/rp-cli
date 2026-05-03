@@ -29,7 +29,8 @@ describe("discovery and read APIs", () => {
       { name: "default", description: "Full summary." },
       { name: "brief" },
       { name: "debug", description: "Debug summary." },
-      { name: "explode", description: "Throw an error." }
+      { name: "explode", description: "Throw an error." },
+      { name: "mutate", description: "Mutate state directly." }
     ]);
   });
 
@@ -142,6 +143,29 @@ describe("discovery and read APIs", () => {
         code: "SUMMARY_RUNTIME_ERROR"
       }
     });
+  });
+
+  it("rejects summaries that directly mutate state", async () => {
+    const workspace = await createWorkspace();
+    await writeCurrentState(workspace.statePath);
+    const before = await readFile(workspace.statePath, "utf8");
+
+    const result = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--state",
+      workspace.statePath,
+      "summary",
+      "mutate"
+    ]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.json).toMatchObject({
+      error: {
+        code: "SUMMARY_RUNTIME_ERROR"
+      }
+    });
+    expect(await readFile(workspace.statePath, "utf8")).toBe(before);
   });
 
   it("outputs the state JSON Schema by default", async () => {
@@ -301,6 +325,13 @@ async function createWorkspace(
       "    explode: {",
       '      description: "Throw an error.",',
       "      run: () => { throw new Error('boom'); }",
+      "    },",
+      "    mutate: {",
+      '      description: "Mutate state directly.",',
+      "      run: ({ state }) => {",
+      "        state.value = 'mutated';",
+      "        return state;",
+      "      }",
       "    }",
       "  }",
       "});"

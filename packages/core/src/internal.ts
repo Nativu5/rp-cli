@@ -7,6 +7,8 @@ export * from "./moduleParser.js";
 export * from "./patch.js";
 export * from "./schema.js";
 export * from "./stateFile.js";
+export * from "./stateLock.js";
+export * from "./stateAccess.js";
 export * from "./summary.js";
 export * from "./types.js";
 export * from "./validation.js";

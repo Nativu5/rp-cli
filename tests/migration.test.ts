@@ -168,6 +168,30 @@ describe("migration CLI", () => {
       }
     });
   });
+
+  it("rejects migrations for state files owned by a different module", async () => {
+    const workspace = await createWorkspace();
+    await writeStateEnvelope(workspace.statePath, 1, { value: "old" }, "other-module");
+
+    const result = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--state",
+      workspace.statePath,
+      "migrate"
+    ]);
+
+    expect(result.exitCode).toBe(3);
+    expect(result.json).toMatchObject({
+      error: {
+        code: "MODULE_STATE_MISMATCH",
+        details: {
+          stateModule: "other-module",
+          module: "migration-phase"
+        }
+      }
+    });
+  });
 });
 
 async function createWorkspace(options: { includeMigrate?: boolean } = {}): Promise<{
@@ -227,13 +251,14 @@ async function writeCurrentState(statePath: string): Promise<void> {
 async function writeStateEnvelope(
   statePath: string,
   schemaVersion: number,
-  state: unknown
+  state: unknown,
+  moduleName = "migration-phase"
 ): Promise<void> {
   await writeFile(
     statePath,
     JSON.stringify({
       rp: {
-        module: "migration-phase",
+        module: moduleName,
         moduleVersion: 8,
         schemaVersion,
         createdAt: "2026-05-03T12:00:00.000Z",

@@ -1,4 +1,4 @@
-import { mkdir, open, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { RpError } from "./errors.js";
@@ -129,38 +129,6 @@ export async function writeJsonFileAtomic(
     throw new RpError("WRITE_FAILED", `failed to write state file: ${filePath}`, {
       cause: error instanceof Error ? error.message : String(error)
     });
-  }
-}
-
-export async function withFileLock<T>(lockPath: string, run: () => Promise<T>): Promise<T> {
-  await mkdir(path.dirname(lockPath), { recursive: true });
-
-  let handle;
-
-  try {
-    handle = await open(lockPath, "wx");
-  } catch (error) {
-    if (isNodeError(error) && error.code === "EEXIST") {
-      throw new RpError("STATE_LOCKED", `state file is locked: ${lockPath}`);
-    }
-
-    throw new RpError("STATE_LOCKED", `failed to acquire state lock: ${lockPath}`, {
-      cause: error instanceof Error ? error.message : String(error)
-    });
-  }
-
-  try {
-    await handle.writeFile(
-      JSON.stringify({
-        pid: process.pid,
-        createdAt: new Date().toISOString()
-      })
-    );
-
-    return await run();
-  } finally {
-    await handle.close();
-    await rm(lockPath, { force: true });
   }
 }
 

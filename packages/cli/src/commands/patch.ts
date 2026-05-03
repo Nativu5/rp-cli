@@ -10,7 +10,7 @@ import {
   updateStateEnvelope,
   validateAuthorState,
   validateStateFile,
-  withFileLock,
+  withStateLock,
   writeJsonFileAtomic
 } from "@rp-cli/core/internal";
 import { readJsonInput } from "../jsonInput.js";
@@ -34,7 +34,7 @@ export function registerPatchCommand(program: Command): void {
         assertJsonPatch(patchInput);
         const patch = patchInput;
 
-        await withFileLock(paths.lockPath, async () => {
+        await withStateLock(paths, async () => {
           const module = await loadModule(paths.modulePath);
           const envelope = validateStateFile(module, await readStateFile(paths.statePath));
           const nextState = validateAuthorState(module, applyJsonPatch(envelope.state, patch));

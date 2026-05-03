@@ -1,6 +1,7 @@
 import { defineModule } from "@rp-cli/core";
 import { z } from "zod";
 
+// Memories are durable story facts the agent should be able to recall later.
 const MemorySchema = z.object({
   id: z.string(),
   text: z.string(),
@@ -9,6 +10,8 @@ const MemorySchema = z.object({
   createdAt: z.string()
 });
 
+// The state schema is the creator's world model: character canon, current scene signals,
+// relationship state, and long-term memory.
 const StateSchema = z.object({
   profile: z
     .object({
@@ -48,12 +51,14 @@ export default defineModule({
   state: {
     version: 1,
     schema: StateSchema,
+    // Defaults describe a new save file before the story has accumulated canon.
     defaults: () => ({
       profile: {},
       mood: {},
       relationships: {},
       memories: []
     }),
+    // Migration keeps older save files usable when the creator evolves the schema.
     migrate: ({ state }) => StateSchema.parse(state)
   },
   actions: {
@@ -65,6 +70,7 @@ export default defineModule({
         pinned: z.boolean().default(false)
       }),
       run({ input, ctx }) {
+        // Actions return JSON Patch; the runtime applies, validates, writes, and logs it.
         return {
           patch: [
             {
@@ -93,6 +99,7 @@ export default defineModule({
         stress: z.number().min(0).max(1).optional()
       }),
       run({ input }) {
+        // Mood updates are semantic writes, so agents do not need to know raw patch paths.
         return {
           patch: Object.entries(input).map(([key, value]) => ({
             op: "add",
@@ -107,6 +114,7 @@ export default defineModule({
   },
   summaries: {
     default({ state }) {
+      // Summaries are read-only views for agents; they do not need to mirror raw state.
       return {
         profile: state.profile,
         mood: state.mood,
@@ -115,6 +123,7 @@ export default defineModule({
       };
     },
     prompt({ state }) {
+      // The prompt summary shapes state into compact context for the next generated scene.
       return {
         character: state.profile,
         currentMood: state.mood,

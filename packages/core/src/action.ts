@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { RpError } from "./errors.js";
 import { assertJsonPatch } from "./patch.js";
+import { cloneStateForUserCode } from "./stateAccess.js";
 import { formatZodIssues } from "./validation.js";
 import type { RpAction, RpActionReturn, RpMeta, RpRuntimeContext } from "./types.js";
 
@@ -65,7 +66,7 @@ export async function runAction<TState, TInput>(args: {
 
   try {
     value = await args.action.run({
-      state: args.state,
+      state: cloneStateForUserCode(args.state),
       input: args.input,
       meta: args.meta,
       ctx: args.ctx

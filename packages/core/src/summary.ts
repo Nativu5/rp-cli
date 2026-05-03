@@ -1,4 +1,5 @@
 import { RpError } from "./errors.js";
+import { cloneStateForUserCode } from "./stateAccess.js";
 import type { RpMeta, RpSummary, RpSummaryFunction } from "./types.js";
 
 export function findSummary(
@@ -46,7 +47,7 @@ export async function runSummary<TState>(args: {
 }): Promise<unknown> {
   try {
     return await args.summary({
-      state: args.state,
+      state: cloneStateForUserCode(args.state),
       meta: args.meta
     });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -234,6 +234,48 @@ describe("state lifecycle CLI", () => {
         code: "STATE_LOCKED"
       }
     });
+  });
+
+  it("recovers stale state locks", async () => {
+    const workspace = await createWorkspace();
+    await mkdir(`${workspace.statePath}.lock`);
+    const staleTime = new Date(Date.now() - 60_000);
+    await utimes(`${workspace.statePath}.lock`, staleTime, staleTime);
+
+    const result = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--state",
+      workspace.statePath,
+      "init"
+    ]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.json.state).toEqual({ value: "ready", count: 1 });
+  });
+
+  it("waits briefly for active state locks to release", async () => {
+    const workspace = await createWorkspace();
+    await mkdir(`${workspace.statePath}.lock`);
+    const releaseLock = setTimeout(() => {
+      void rm(`${workspace.statePath}.lock`, { recursive: true, force: true });
+    }, 50);
+
+    try {
+      const result = await runCli([
+        "--module",
+        workspace.modulePath,
+        "--state",
+        workspace.statePath,
+        "init"
+      ]);
+
+      expect(result.exitCode).toBeUndefined();
+      expect(result.json.state).toEqual({ value: "ready", count: 1 });
+    } finally {
+      clearTimeout(releaseLock);
+      await rm(`${workspace.statePath}.lock`, { recursive: true, force: true });
+    }
   });
 });
 

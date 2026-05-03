@@ -12,7 +12,8 @@ import {
   parseModule,
   parseEnvelope,
   resolveRpPaths,
-  toErrorShape
+  toErrorShape,
+  validateStateFile
 } from "@rp-cli/core/internal";
 
 describe("runtime foundations", () => {
@@ -93,6 +94,19 @@ describe("runtime foundations", () => {
     });
   });
 
+  it("reports unsupported module file extensions before importing", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "rp-cli-module-"));
+    const modulePath = path.join(dir, "rp.module.json");
+    await writeFile(modulePath, "{}\n");
+
+    await expect(loadModule(modulePath)).rejects.toMatchObject({
+      code: "MODULE_INVALID",
+      details: {
+        supportedExtensions: [".ts", ".mts", ".js", ".mjs", ".cjs"]
+      }
+    });
+  });
+
   it("validates state envelopes and rejects missing author state", () => {
     const envelope = parseEnvelope({
       rp: {
@@ -142,6 +156,33 @@ describe("runtime foundations", () => {
         module
       )
     ).toThrowError(/older/);
+  });
+
+  it("rejects state files owned by a different module", () => {
+    const module = defineModule({
+      name: "current-module",
+      version: 1,
+      state: {
+        version: 1,
+        schema: z.object({ value: z.string() }),
+        defaults: () => ({ value: "ready" })
+      }
+    });
+
+    expect(() =>
+      validateStateFile(module, {
+        rp: {
+          module: "other-module",
+          moduleVersion: 1,
+          schemaVersion: 1,
+          createdAt: "2026-05-03T12:00:00.000Z",
+          updatedAt: "2026-05-03T12:00:00.000Z"
+        },
+        state: {
+          value: "ready"
+        }
+      })
+    ).toThrowError(/belongs to a different module/);
   });
 
   it("uses CLI options before environment variables when resolving paths", () => {

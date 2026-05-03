@@ -64,6 +64,18 @@ export function assertCurrentSchemaVersion(
   }
 }
 
+export function assertModuleCompatibility(
+  meta: RpMeta,
+  module: { name: string; version: number }
+): void {
+  if (meta.module !== module.name) {
+    throw new RpError("MODULE_STATE_MISMATCH", "state file belongs to a different module", {
+      stateModule: meta.module,
+      module: module.name
+    });
+  }
+}
+
 export function validateAuthorState<TState>(module: RpModule<TState>, state: unknown): TState {
   const parsed = module.state.schema.safeParse(state);
 
@@ -90,6 +102,7 @@ export function validateStateFile<TState>(
   module: RpModule<TState>,
   envelope: RpStateFile
 ): RpStateFile<TState> {
+  assertModuleCompatibility(envelope.rp, module);
   assertCurrentSchemaVersion(envelope.rp, module);
 
   return {

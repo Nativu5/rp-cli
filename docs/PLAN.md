@@ -25,7 +25,7 @@ patch 应用
 action 执行
 summary 调用
 migrate 执行
-schema/actions 查询
+schema/action/summary 查询
 log
 ```
 
@@ -510,7 +510,6 @@ rp migrate
 rp state
 rp patch
 rp action
-rp actions
 rp summary
 rp schema
 rp log
@@ -823,26 +822,33 @@ rp action remember '{"text":"Mio likes rainy afternoons.","tags":["preference"]}
 rp action remember --file input.json
 ```
 
+列出可用 actions：
+
+```bash
+rp action --list
+```
+
 行为：
 
 ```text
-1. 加载 module。
-2. 查找 action。
-3. 读取 state file。
-4. 验证 envelope。
-5. 检查 rp.schemaVersion 是否等于 module.state.version。
-6. 验证当前 state。
-7. 解析 input JSON。
-8. 用 action.input Zod schema 验证 input。
-9. 调用 action.run。
-10. action.run 返回 patch、可选 reason、可选 message。
-11. 校验 patch 格式。
-12. 将 patch 应用到 state。
-13. 用 state schema 验证 next state。
-14. 如果 --dry-run，返回预览，不写入。
-15. 否则原子写入。
-16. 记录 log，包括 input、patch、CLI reason、action reason、message。
-17. 返回状态修改后的 result 和可选 message。
+1. 如果传入 --list，加载 module，输出 action 列表，不读取 state file。
+2. 否则加载 module。
+3. 查找 action。
+4. 读取 state file。
+5. 验证 envelope。
+6. 检查 rp.schemaVersion 是否等于 module.state.version。
+7. 验证当前 state。
+8. 解析 input JSON。
+9. 用 action.input Zod schema 验证 input。
+10. 调用 action.run。
+11. action.run 返回 patch、可选 reason、可选 message。
+12. 校验 patch 格式。
+13. 将 patch 应用到 state。
+14. 用 state schema 验证 next state。
+15. 如果 --dry-run，返回预览，不写入。
+16. 否则原子写入。
+17. 记录 log，包括 input、patch、CLI reason、action reason、message。
+18. 返回状态修改后的 result 和可选 message。
 ```
 
 MVP action 返回：
@@ -904,12 +910,12 @@ CLI 成功输出由框架生成，不直接暴露创作者自定义 result。
 
 ---
 
-## 6.7 `rp actions`
+## 6.7 `rp action --list`
 
 列出创作者定义的 actions。
 
 ```bash
-rp actions
+rp action --list
 ```
 
 输出：
@@ -927,44 +933,14 @@ rp actions
 ]
 ```
 
-查看某个 action：
-
-```bash
-rp actions remember
-```
-
-输出：
-
-```json
-{
-  "name": "remember",
-  "description": "Add a long-term memory.",
-  "inputSchema": {
-    "type": "object",
-    "properties": {
-      "text": {
-        "type": "string"
-      },
-      "tags": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      },
-      "pinned": {
-        "type": "boolean"
-      }
-    },
-    "required": ["text"]
-  }
-}
-```
-
 说明：
 
 ```text
-rp actions 是 Agent 发现能力的重要接口。
+rp action --list 是 Agent 发现写能力的重要接口。
+单个 action 的 input JSON Schema 通过 rp schema action <name> 查看。
+rp action --help 保持 Commander 内置静态帮助语义，不加载创作者模块。
 不再提供 rp tools。
+不提供独立 actions 子命令，避免和 rp summary 的调用风格不一致。
 ```
 
 ---
@@ -978,6 +954,7 @@ rp summary
 rp summary brief
 rp summary prompt
 rp summary debug
+rp summary --list
 ```
 
 规则：
@@ -986,6 +963,7 @@ rp summary debug
 rp summary 默认调用 default summary。
 如果没有 default，则调用 brief。
 如果没有 brief，则调用第一个 summary。
+rp summary --list 输出可用 summaries，不读取 state file。
 ```
 
 Summary 必须只读。
@@ -1549,7 +1527,6 @@ rp action     输出 action result
 rp patch      输出 patch apply result
 rp migrate    输出 migration result
 rp validate   输出 validation result
-rp actions    输出 actions list/detail
 rp schema     输出 schema
 rp log        输出 log entries
 ```
@@ -1879,7 +1856,6 @@ rp-cli/
 │       │   │   ├── state.ts
 │       │   │   ├── patch.ts
 │       │   │   ├── action.ts
-│       │   │   ├── actions.ts
 │       │   │   ├── summary.ts
 │       │   │   ├── schema.ts
 │       │   │   └── log.ts
@@ -2084,7 +2060,7 @@ rp --module examples/life-sim/rp.module.ts --state mio.json state \
 查看 actions：
 
 ```bash
-rp --module examples/life-sim/rp.module.ts actions
+rp --module examples/life-sim/rp.module.ts action --list
 ```
 
 验证：
@@ -2121,7 +2097,6 @@ migrate
 state
 patch
 action
-actions
 summary
 schema
 log

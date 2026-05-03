@@ -32,19 +32,19 @@ The repository has clear file targets for the next implementation phase
 
 ## Phase 2: Core Runtime Foundations
 
-- [ ] Implement `defineModule` validation.
-- [ ] Implement module loading for local TypeScript modules.
-- [ ] Implement envelope validation.
-- [ ] Implement JSON output and unified error formatting.
-- [ ] Implement state file path, log path, and lock path helpers.
+- [x] Implement `defineModule` validation.
+- [x] Implement module loading for local TypeScript modules.
+- [x] Implement envelope validation.
+- [x] Implement JSON output and unified error formatting.
+- [x] Implement state file path, log path, and lock path helpers.
 
 ## Phase 3: State Lifecycle Commands
 
-- [ ] Implement `rp init`.
-- [ ] Implement `rp validate`.
-- [ ] Implement `rp state`.
-- [ ] Implement atomic state file writes.
-- [ ] Implement basic write locking.
+- [x] Implement `rp init`.
+- [x] Implement `rp validate`.
+- [x] Implement `rp state`.
+- [x] Implement atomic state file writes.
+- [x] Implement basic write locking.
 
 ## Phase 4: Patch And Action Writes
 
@@ -67,7 +67,8 @@ The repository has clear file targets for the next implementation phase
 
 - [ ] Implement summary selection.
 - [ ] Implement `rp summary`.
-- [ ] Implement `rp actions`.
+- [ ] Implement `rp action --list`.
+- [ ] Implement `rp summary --list`.
 - [ ] Implement JSON Schema export.
 - [ ] Implement `rp schema`.
 
@@ -88,4 +89,10 @@ The repository has clear file targets for the next implementation phase
 
 ## Current Next Step
 
-Start Phase 2 by implementing `defineModule`, module loading, envelope validation, and shared error/output helpers.
+Start Phase 4 by implementing full JSON Patch validation/apply flow, `rp patch`, action input validation, action return validation, `rp action`, and generated action CLI output.
+
+## Architecture Notes
+
+- `@rp-cli/core` is the public creator API. It should expose `defineModule` and creator-facing types only.
+- `@rp-cli/core/internal` is the CLI/runtime API. It exposes module loading, module parsing, state file helpers, validation, logging, schema, action, summary, patch, and migration helpers.
+- Unknown module exports must be parsed with `parseModule(value: unknown)` instead of casting at the call site.

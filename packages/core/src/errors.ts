@@ -49,3 +49,19 @@ export class RpError extends Error {
     };
   }
 }
+
+export function toErrorShape(
+  error: unknown,
+  fallbackCode: RpErrorCode = "MODULE_INVALID"
+): RpErrorShape {
+  if (error instanceof RpError) {
+    return error.toJSON();
+  }
+
+  return {
+    error: {
+      code: fallbackCode,
+      message: error instanceof Error ? error.message : String(error)
+    }
+  };
+}

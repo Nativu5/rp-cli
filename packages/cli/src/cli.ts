@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { registerActionCommand } from "./commands/action.js";
-import { registerActionsCommand } from "./commands/actions.js";
 import { registerInitCommand } from "./commands/init.js";
 import { registerLogCommand } from "./commands/log.js";
 import { registerMigrateCommand } from "./commands/migrate.js";
@@ -30,7 +29,6 @@ export function createProgram(): Command {
   registerStateCommand(program);
   registerPatchCommand(program);
   registerActionCommand(program);
-  registerActionsCommand(program);
   registerSummaryCommand(program);
   registerSchemaCommand(program);
   registerLogCommand(program);

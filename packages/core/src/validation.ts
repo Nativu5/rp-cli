@@ -3,11 +3,11 @@ import { RpError } from "./errors.js";
 import type { RpMeta, RpModule, RpStateFile } from "./types.js";
 
 export const RpMetaSchema = z.object({
-  module: z.string(),
-  moduleVersion: z.number(),
-  schemaVersion: z.number(),
-  createdAt: z.string(),
-  updatedAt: z.string()
+  module: z.string().min(1),
+  moduleVersion: z.number().int().nonnegative(),
+  schemaVersion: z.number().int().nonnegative(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
 });
 
 export const RpStateEnvelopeSchema = z.object({
@@ -16,6 +16,16 @@ export const RpStateEnvelopeSchema = z.object({
 });
 
 export function parseEnvelope(value: unknown): RpStateFile {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !Object.prototype.hasOwnProperty.call(value, "state")
+  ) {
+    throw new RpError("STATE_ENVELOPE_INVALID", "state envelope is invalid", {
+      issues: ["state field is required"]
+    });
+  }
+
   const parsed = RpStateEnvelopeSchema.safeParse(value);
 
   if (!parsed.success) {
@@ -32,7 +42,7 @@ export function parseEnvelope(value: unknown): RpStateFile {
 
 export function assertCurrentSchemaVersion(
   meta: RpMeta,
-  module: RpModule
+  module: { state: { version: number } }
 ): void {
   if (meta.schemaVersion < module.state.version) {
     throw new RpError(
@@ -49,4 +59,34 @@ export function assertCurrentSchemaVersion(
       { fromVersion: meta.schemaVersion, toVersion: module.state.version }
     );
   }
+}
+
+export function validateAuthorState<TState>(
+  module: RpModule<TState>,
+  state: unknown
+): TState {
+  const parsed = module.state.schema.safeParse(state);
+
+  if (!parsed.success) {
+    throw new RpError("VALIDATION_ERROR", "state failed validation", {
+      issues: parsed.error.issues.map((issue) => ({
+        path: issue.path.length === 0 ? "/" : `/${issue.path.join("/")}`,
+        message: issue.message
+      }))
+    });
+  }
+
+  return parsed.data;
+}
+
+export function validateStateFile<TState>(
+  module: RpModule<TState>,
+  envelope: RpStateFile
+): RpStateFile<TState> {
+  assertCurrentSchemaVersion(envelope.rp, module);
+
+  return {
+    rp: envelope.rp,
+    state: validateAuthorState(module, envelope.state)
+  };
 }

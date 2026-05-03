@@ -1,12 +1,16 @@
-export * from "./action.js";
 export * from "./defineModule.js";
-export * from "./errors.js";
-export * from "./log.js";
-export * from "./migration.js";
-export * from "./moduleLoader.js";
-export * from "./patch.js";
-export * from "./schema.js";
-export * from "./stateFile.js";
-export * from "./summary.js";
-export * from "./types.js";
-export * from "./validation.js";
+export type {
+  JsonPatch,
+  JsonPatchOperation,
+  RpAction,
+  RpActionContext,
+  RpActionReturn,
+  RpMeta,
+  RpMigration,
+  RpMigrationContext,
+  RpModule,
+  RpRuntimeContext,
+  RpSummary,
+  RpSummaryFunction,
+  RpSummaryObject
+} from "./types.js";

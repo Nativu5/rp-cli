@@ -300,8 +300,7 @@ reason 不进入 state
 示例：
 
 ```bash
-rp actions
-rp actions remember
+rp action --list
 rp schema
 rp schema action remember
 ```
@@ -309,8 +308,9 @@ rp schema action remember
 验收标准：
 
 ```text
-rp actions 输出 action 列表
-rp actions <name> 输出 action 描述和 input schema
+rp action --list 输出 action 列表
+rp summary --list 输出 summary 列表
+rp schema action <name> 输出 action 描述和 input schema
 rp schema 输出 state JSON Schema
 schema 转换失败时返回错误
 ```
@@ -526,20 +526,20 @@ rp summary <name>
 
 ---
 
-## 7.10 查看 actions
+## 7.10 查看 action 和 summary
 
 命令：
 
 ```bash
-rp actions
-rp actions <name>
+rp action --list
+rp summary --list
 ```
 
 功能：
 
 ```text
 列出 action
-查看 action 描述和 input schema
+列出 summary
 ```
 
 ---
@@ -744,7 +744,6 @@ rp migrate
 rp state
 rp patch
 rp action
-rp actions
 rp summary
 rp schema
 rp log
@@ -826,7 +825,7 @@ patch 后必须经过 Zod 验证
 action 返回 patch 并由框架应用
 summary 只读
 reason 写入 log 但不写入 state
-actions/schema 可被查看
+action/summary/schema 可被查看
 日志可读取
 非法输入返回统一错误 JSON
 测试覆盖核心流程

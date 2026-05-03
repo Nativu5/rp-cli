@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { defineModule, resolveRpPaths } from "@rp-cli/core";
+import * as publicCoreApi from "@rp-cli/core";
+import { defineModule } from "@rp-cli/core";
+import { resolveRpPaths } from "@rp-cli/core/internal";
 import { z } from "zod";
 import { createProgram } from "../packages/cli/src/cli.js";
 
@@ -34,7 +36,6 @@ describe("scaffold", () => {
 
     expect(commandNames).toEqual([
       "action",
-      "actions",
       "init",
       "log",
       "migrate",
@@ -44,5 +45,20 @@ describe("scaffold", () => {
       "summary",
       "validate"
     ]);
+  });
+
+  it("uses --list on action and summary for capability discovery", () => {
+    const program = createProgram();
+    const actionCommand = program.commands.find((command) => command.name() === "action");
+    const summaryCommand = program.commands.find((command) => command.name() === "summary");
+
+    expect(actionCommand?.options.some((option) => option.long === "--list")).toBe(true);
+    expect(summaryCommand?.options.some((option) => option.long === "--list")).toBe(true);
+  });
+
+  it("keeps runtime-only APIs out of the public creator API", () => {
+    expect("parseModule" in publicCoreApi).toBe(false);
+    expect("loadModule" in publicCoreApi).toBe(false);
+    expect("readStateFile" in publicCoreApi).toBe(false);
   });
 });

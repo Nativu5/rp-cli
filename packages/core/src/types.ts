@@ -75,9 +75,7 @@ export interface RpSummaryObject<TState = unknown> {
   run: RpSummaryFunction<TState>;
 }
 
-export type RpSummary<TState = unknown> =
-  | RpSummaryFunction<TState>
-  | RpSummaryObject<TState>;
+export type RpSummary<TState = unknown> = RpSummaryFunction<TState> | RpSummaryObject<TState>;
 
 export interface RpMigration<TState = unknown> {
   (args: {

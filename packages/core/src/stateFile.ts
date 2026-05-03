@@ -1,12 +1,4 @@
-import {
-  mkdir,
-  open,
-  readFile,
-  rename,
-  rm,
-  stat,
-  writeFile
-} from "node:fs/promises";
+import { mkdir, open, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { RpError } from "./errors.js";
@@ -97,6 +89,24 @@ export function createStateEnvelope<TState>(
   };
 }
 
+export function updateStateEnvelope<TState>(
+  envelope: RpStateFile,
+  module: RpModule<unknown>,
+  state: TState,
+  timestamp = new Date().toISOString()
+): RpStateFile<TState> {
+  return {
+    rp: {
+      ...envelope.rp,
+      module: module.name,
+      moduleVersion: module.version,
+      schemaVersion: module.state.version,
+      updatedAt: timestamp
+    },
+    state
+  };
+}
+
 export async function writeJsonFileAtomic(
   filePath: string,
   value: unknown,
@@ -111,11 +121,7 @@ export async function writeJsonFileAtomic(
   await mkdir(directory, { recursive: true });
 
   try {
-    await writeFile(
-      temporaryPath,
-      `${JSON.stringify(value, null, pretty ? 2 : 0)}\n`,
-      "utf8"
-    );
+    await writeFile(temporaryPath, `${JSON.stringify(value, null, pretty ? 2 : 0)}\n`, "utf8");
     await rename(temporaryPath, filePath);
   } catch (error) {
     await rm(temporaryPath, { force: true });
@@ -126,10 +132,7 @@ export async function writeJsonFileAtomic(
   }
 }
 
-export async function withFileLock<T>(
-  lockPath: string,
-  run: () => Promise<T>
-): Promise<T> {
+export async function withFileLock<T>(lockPath: string, run: () => Promise<T>): Promise<T> {
   await mkdir(path.dirname(lockPath), { recursive: true });
 
   let handle;

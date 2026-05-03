@@ -8,13 +8,23 @@
   ],
   "scripts": {
     "build": "npm run build -w @rp-cli/core && npm run build -w @rp-cli/cli",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "typecheck": "npm run typecheck -w @rp-cli/core && npm run build -w @rp-cli/core && npm run typecheck -w @rp-cli/cli && tsc -p tsconfig.examples.json --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "latest",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
+    "prettier": "^3.8.3",
     "tsx": "latest",
     "typescript": "latest",
+    "typescript-eslint": "^8.59.1",
     "vitest": "latest",
     "zod": "^4.4.2"
   }

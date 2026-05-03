@@ -48,20 +48,20 @@ The repository has clear file targets for the next implementation phase
 
 ## Phase 4: Patch And Action Writes
 
-- [ ] Implement full `fast-json-patch` validation and apply flow.
-- [ ] Implement `rp patch`.
-- [ ] Implement action input validation.
-- [ ] Implement action return validation.
-- [ ] Implement `rp action`.
-- [ ] Implement generated action CLI output.
+- [x] Implement full `fast-json-patch` validation and apply flow.
+- [x] Implement `rp patch`.
+- [x] Implement action input validation.
+- [x] Implement action return validation.
+- [x] Implement `rp action`.
+- [x] Implement generated action CLI output.
 
 ## Phase 5: Migration
 
-- [ ] Implement schema version comparison.
-- [ ] Implement `rp migrate`.
-- [ ] Return `MIGRATION_REQUIRED` for old state versions outside migrate.
-- [ ] Return `MIGRATION_FAILED` for newer state files.
-- [ ] Log successful migrations.
+- [x] Implement schema version comparison.
+- [x] Implement `rp migrate`.
+- [x] Return `MIGRATION_REQUIRED` for old state versions outside migrate.
+- [x] Return `MIGRATION_FAILED` for newer state files.
+- [x] Log successful migrations.
 
 ## Phase 6: Discovery And Read APIs
 
@@ -89,7 +89,7 @@ The repository has clear file targets for the next implementation phase
 
 ## Current Next Step
 
-Start Phase 4 by implementing full JSON Patch validation/apply flow, `rp patch`, action input validation, action return validation, `rp action`, and generated action CLI output.
+Start Phase 6 by implementing summary selection, `rp summary`, action/summary listing, and JSON Schema export via `rp schema`.
 
 ## Architecture Notes
 

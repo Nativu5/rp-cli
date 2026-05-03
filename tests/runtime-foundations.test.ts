@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -207,5 +207,14 @@ describe("runtime foundations", () => {
       },
       required: ["value"]
     });
+  });
+
+  it("does not use deprecated top-level ZodIssue imports", async () => {
+    const source = await readFile(
+      new URL("../packages/core/src/validation.ts", import.meta.url),
+      "utf8"
+    );
+
+    expect(source).not.toMatch(/import\s+type\s+\{[^}]*\bZodIssue\b[^}]*\}\s+from\s+["']zod["']/);
   });
 });

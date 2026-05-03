@@ -92,9 +92,7 @@ describe("state lifecycle CLI", () => {
 
       expect(result.exitCode).toBeUndefined();
       expect(result.json.rp.module).toBe("phase-three");
-      expect(JSON.parse(await readFile(workspace.statePath, "utf8"))).toEqual(
-        result.json
-      );
+      expect(JSON.parse(await readFile(workspace.statePath, "utf8"))).toEqual(result.json);
     } finally {
       restoreEnv("RP_MODULE", previousModule);
       restoreEnv("RP_STATE", previousState);
@@ -119,9 +117,7 @@ describe("state lifecycle CLI", () => {
       ]);
 
       expect(result.exitCode).toBeUndefined();
-      expect(JSON.parse(await readFile(workspace.statePath, "utf8"))).toEqual(
-        result.json
-      );
+      expect(JSON.parse(await readFile(workspace.statePath, "utf8"))).toEqual(result.json);
       await expect(readFile(envWorkspace.statePath, "utf8")).rejects.toMatchObject({
         code: "ENOENT"
       });
@@ -133,13 +129,7 @@ describe("state lifecycle CLI", () => {
 
   it("validates a current state file", async () => {
     const workspace = await createWorkspace();
-    await runCli([
-      "--module",
-      workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "init"
-    ]);
+    await runCli(["--module", workspace.modulePath, "--state", workspace.statePath, "init"]);
 
     const result = await runCli([
       "--module",
@@ -195,13 +185,7 @@ describe("state lifecycle CLI", () => {
 
   it("outputs author state and raw envelope", async () => {
     const workspace = await createWorkspace();
-    await runCli([
-      "--module",
-      workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "init"
-    ]);
+    await runCli(["--module", workspace.modulePath, "--state", workspace.statePath, "init"]);
 
     const stateResult = await runCli([
       "--module",

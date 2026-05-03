@@ -469,12 +469,12 @@ rp --module ./rp.module.ts --state ./rp.state.json <command>
 
 全局参数：
 
-| 参数                | 含义                      |
-| ----------------- | ----------------------- |
-| `--module <path>` | 模块文件路径                  |
-| `--state <path>`  | 状态文件路径                  |
-| `--pretty`        | 美化 JSON 输出              |
-| `--dry-run`       | 对写操作只预览，不落盘             |
+| 参数              | 含义                                 |
+| ----------------- | ------------------------------------ |
+| `--module <path>` | 模块文件路径                         |
+| `--state <path>`  | 状态文件路径                         |
+| `--pretty`        | 美化 JSON 输出                       |
+| `--dry-run`       | 对写操作只预览，不落盘               |
 | `--reason <text>` | 写操作原因，只进入 log，不进入 state |
 
 环境变量：
@@ -993,9 +993,7 @@ Summary 必须只读。
   "mood": {
     "label": "happy"
   },
-  "importantMemories": [
-    "Mio likes rainy afternoons."
-  ]
+  "importantMemories": ["Mio likes rainy afternoons."]
 }
 ```
 
@@ -1237,10 +1235,7 @@ export type RpActionReturn = {
 export interface RpSummary<TState> {
   description?: string;
 
-  run(args: {
-    state: Readonly<TState>;
-    meta: RpMeta;
-  }): unknown | Promise<unknown>;
+  run(args: { state: Readonly<TState>; meta: RpMeta }): unknown | Promise<unknown>;
 }
 ```
 
@@ -1633,22 +1628,30 @@ STATE_LOCKED
 
 ```ts
 const StateSchema = z.object({
-  profile: z.object({
-    name: z.string().optional(),
-    age: z.number().optional()
-  }).catchall(z.unknown()),
+  profile: z
+    .object({
+      name: z.string().optional(),
+      age: z.number().optional()
+    })
+    .catchall(z.unknown()),
 
-  mood: z.object({
-    label: z.string().optional(),
-    valence: z.number().min(-1).max(1).optional()
-  }).catchall(z.unknown()),
+  mood: z
+    .object({
+      label: z.string().optional(),
+      valence: z.number().min(-1).max(1).optional()
+    })
+    .catchall(z.unknown()),
 
-  memories: z.array(z.object({
-    id: z.string(),
-    text: z.string(),
-    pinned: z.boolean().default(false),
-    createdAt: z.string()
-  })).default([])
+  memories: z
+    .array(
+      z.object({
+        id: z.string(),
+        text: z.string(),
+        pinned: z.boolean().default(false),
+        createdAt: z.string()
+      })
+    )
+    .default([])
 });
 ```
 
@@ -1894,24 +1897,36 @@ const MemorySchema = z.object({
 });
 
 const StateSchema = z.object({
-  profile: z.object({
-    name: z.string().optional(),
-    age: z.number().optional(),
-    personality: z.array(z.string()).optional()
-  }).catchall(z.unknown()).default({}),
+  profile: z
+    .object({
+      name: z.string().optional(),
+      age: z.number().optional(),
+      personality: z.array(z.string()).optional()
+    })
+    .catchall(z.unknown())
+    .default({}),
 
-  mood: z.object({
-    label: z.string().optional(),
-    valence: z.number().min(-1).max(1).optional(),
-    arousal: z.number().min(0).max(1).optional(),
-    stress: z.number().min(0).max(1).optional()
-  }).catchall(z.unknown()).default({}),
+  mood: z
+    .object({
+      label: z.string().optional(),
+      valence: z.number().min(-1).max(1).optional(),
+      arousal: z.number().min(0).max(1).optional(),
+      stress: z.number().min(0).max(1).optional()
+    })
+    .catchall(z.unknown())
+    .default({}),
 
-  relationships: z.record(z.object({
-    affection: z.number().min(0).max(100).optional(),
-    trust: z.number().min(0).max(100).optional(),
-    notes: z.array(z.string()).default([])
-  }).catchall(z.unknown())).default({}),
+  relationships: z
+    .record(
+      z
+        .object({
+          affection: z.number().min(0).max(100).optional(),
+          trust: z.number().min(0).max(100).optional(),
+          notes: z.array(z.string()).default([])
+        })
+        .catchall(z.unknown())
+    )
+    .default({}),
 
   memories: z.array(MemorySchema).default([])
 });
@@ -2001,9 +2016,7 @@ export default defineModule({
       return {
         character: state.profile,
         currentMood: state.mood,
-        importantMemories: state.memories
-          .filter((m) => m.pinned)
-          .map((m) => m.text)
+        importantMemories: state.memories.filter((m) => m.pinned).map((m) => m.text)
       };
     }
   }

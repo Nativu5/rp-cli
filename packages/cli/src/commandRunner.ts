@@ -1,10 +1,5 @@
 import type { Command } from "commander";
-import {
-  RpError,
-  resolveRpPaths,
-  type RpErrorCode,
-  type RpPaths
-} from "@rp-cli/core/internal";
+import { RpError, resolveRpPaths, type RpErrorCode, type RpPaths } from "@rp-cli/core/internal";
 import { toErrorShape, writeJson } from "./output.js";
 
 export interface GlobalCliOptions {
@@ -85,8 +80,6 @@ function isModuleError(code: RpErrorCode): boolean {
 
 function isStateFileError(code: RpErrorCode): boolean {
   return (
-    code === "STATE_NOT_FOUND" ||
-    code === "STATE_INVALID_JSON" ||
-    code === "STATE_ENVELOPE_INVALID"
+    code === "STATE_NOT_FOUND" || code === "STATE_INVALID_JSON" || code === "STATE_ENVELOPE_INVALID"
   );
 }

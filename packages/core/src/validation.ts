@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { RpError } from "./errors.js";
+import { compareSchemaVersions } from "./migration.js";
 import type { RpMeta, RpModule, RpStateFile } from "./types.js";
 
 export const RpMetaSchema = z.object({
@@ -44,7 +45,9 @@ export function assertCurrentSchemaVersion(
   meta: RpMeta,
   module: { state: { version: number } }
 ): void {
-  if (meta.schemaVersion < module.state.version) {
+  const comparison = compareSchemaVersions(meta.schemaVersion, module.state.version);
+
+  if (comparison === "older") {
     throw new RpError(
       "MIGRATION_REQUIRED",
       "state schemaVersion is older than module state.version",
@@ -52,7 +55,7 @@ export function assertCurrentSchemaVersion(
     );
   }
 
-  if (meta.schemaVersion > module.state.version) {
+  if (comparison === "newer") {
     throw new RpError(
       "MIGRATION_FAILED",
       "state schemaVersion is newer than module state.version",
@@ -61,25 +64,26 @@ export function assertCurrentSchemaVersion(
   }
 }
 
-export function validateAuthorState<TState>(
-  module: RpModule<TState>,
-  state: unknown
-): TState {
+export function validateAuthorState<TState>(module: RpModule<TState>, state: unknown): TState {
   const parsed = module.state.schema.safeParse(state);
 
   if (!parsed.success) {
     throw new RpError("VALIDATION_ERROR", "state failed validation", {
-      issues: parsed.error.issues.map((issue) => ({
-        path:
-          issue.path.length === 0
-            ? "/"
-            : `/${issue.path.map((part) => String(part)).join("/")}`,
-        message: issue.message
-      }))
+      issues: formatZodIssues(parsed.error.issues)
     });
   }
 
   return parsed.data;
+}
+
+export function formatZodIssues(issues: readonly z.core.$ZodIssue[]): {
+  path: string;
+  message: string;
+}[] {
+  return issues.map((issue) => ({
+    path: issue.path.length === 0 ? "/" : `/${issue.path.map((part) => String(part)).join("/")}`,
+    message: issue.message
+  }));
 }
 
 export function validateStateFile<TState>(

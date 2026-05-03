@@ -20,10 +20,7 @@ export function registerInitCommand(program: Command): void {
       await runCommand(command, async ({ paths, pretty }) => {
         await withFileLock(paths.lockPath, async () => {
           if (!options.force && (await pathExists(paths.statePath))) {
-            throw new RpError(
-              "WRITE_FAILED",
-              `state file already exists: ${paths.statePath}`
-            );
+            throw new RpError("WRITE_FAILED", `state file already exists: ${paths.statePath}`);
           }
 
           const module = await loadModule(paths.modulePath);

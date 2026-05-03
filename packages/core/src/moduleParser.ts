@@ -45,10 +45,7 @@ function validateModuleShape(value: unknown): string[] {
     issues.push("state.defaults must be a function");
   }
 
-  if (
-    value.state.migrate !== undefined &&
-    typeof value.state.migrate !== "function"
-  ) {
+  if (value.state.migrate !== undefined && typeof value.state.migrate !== "function") {
     issues.push("state.migrate must be a function when provided");
   }
 
@@ -105,10 +102,7 @@ function validateSummaries(value: unknown, issues: string[]): void {
       continue;
     }
 
-    if (
-      summary.description !== undefined &&
-      !isNonEmptyString(summary.description)
-    ) {
+    if (summary.description !== undefined && !isNonEmptyString(summary.description)) {
       issues.push(`summaries.${name}.description must be a non-empty string`);
     }
 
@@ -132,8 +126,6 @@ function isVersion(value: unknown): value is number {
 
 function isZodType(value: unknown): boolean {
   return (
-    isRecord(value) &&
-    typeof value.parse === "function" &&
-    typeof value.safeParse === "function"
+    isRecord(value) && typeof value.parse === "function" && typeof value.safeParse === "function"
   );
 }

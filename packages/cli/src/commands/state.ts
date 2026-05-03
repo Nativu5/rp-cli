@@ -1,9 +1,5 @@
 import type { Command } from "commander";
-import {
-  loadModule,
-  readStateFile,
-  validateStateFile
-} from "@rp-cli/core/internal";
+import { loadModule, readStateFile, validateStateFile } from "@rp-cli/core/internal";
 import { runCommand } from "../commandRunner.js";
 import { writeJson } from "../output.js";
 

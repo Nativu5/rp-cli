@@ -12,12 +12,16 @@ const MemorySchema = z.object({
 const StateSchema = z.object({
   profile: z.object({}).catchall(z.unknown()).default({}),
   mood: z.object({}).catchall(z.unknown()).default({}),
-  relationships: z.record(
-    z.string(),
-    z.object({
-      notes: z.array(z.string()).default([])
-    }).catchall(z.unknown())
-  ).default({}),
+  relationships: z
+    .record(
+      z.string(),
+      z
+        .object({
+          notes: z.array(z.string()).default([])
+        })
+        .catchall(z.unknown())
+    )
+    .default({}),
   memories: z.array(MemorySchema).default([])
 });
 

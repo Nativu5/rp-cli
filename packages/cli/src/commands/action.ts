@@ -1,8 +1,10 @@
 import type { Command } from "commander";
 import {
+  appendJsonLogEntry,
   applyJsonPatch,
   createRuntimeContext,
   findAction,
+  hashState,
   loadModule,
   readStateFile,
   RpError,
@@ -33,7 +35,7 @@ export function registerActionCommand(program: Command): void {
         options: { list?: boolean; file?: string },
         command
       ) => {
-        await runCommand(command, async ({ paths, pretty, dryRun }) => {
+        await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
           const module = await loadModule(paths.modulePath);
 
           if (options.list) {
@@ -56,12 +58,13 @@ export function registerActionCommand(program: Command): void {
 
           await withFileLock(paths.lockPath, async () => {
             const envelope = validateStateFile(module, await readStateFile(paths.statePath));
+            const ctx = createRuntimeContext();
             const result = await runAction({
               action,
               state: envelope.state,
               input,
               meta: envelope.rp,
-              ctx: createRuntimeContext()
+              ctx
             });
 
             if (result.patch.length === 0) {
@@ -79,10 +82,23 @@ export function registerActionCommand(program: Command): void {
               module,
               applyJsonPatch(envelope.state, result.patch)
             );
-            const nextEnvelope = updateStateEnvelope(envelope, module, nextState);
+            const nextEnvelope = updateStateEnvelope(envelope, module, nextState, ctx.now());
 
             if (!dryRun) {
               await writeJsonFileAtomic(paths.statePath, nextEnvelope);
+              await appendJsonLogEntry(paths.logPath, {
+                id: ctx.id("log"),
+                time: ctx.now(),
+                type: "action",
+                name,
+                ...(reason === undefined ? {} : { reason }),
+                ...(result.reason === undefined ? {} : { actionReason: result.reason }),
+                ...(result.message === undefined ? {} : { message: result.message }),
+                input,
+                patch: result.patch,
+                stateHashBefore: hashState(envelope.state),
+                stateHashAfter: hashState(nextState)
+              });
             }
 
             writeJson(

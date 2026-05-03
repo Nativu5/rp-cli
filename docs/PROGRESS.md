@@ -65,19 +65,19 @@ The repository has clear file targets for the next implementation phase
 
 ## Phase 6: Discovery And Read APIs
 
-- [ ] Implement summary selection.
-- [ ] Implement `rp summary`.
-- [ ] Implement `rp action --list`.
-- [ ] Implement `rp summary --list`.
-- [ ] Implement JSON Schema export.
-- [ ] Implement `rp schema`.
+- [x] Implement summary selection.
+- [x] Implement `rp summary`.
+- [x] Implement `rp action --list`.
+- [x] Implement `rp summary --list`.
+- [x] Implement JSON Schema export.
+- [x] Implement `rp schema`.
 
 ## Phase 7: Logging
 
-- [ ] Implement JSONL log append.
-- [ ] Implement `rp log`.
-- [ ] Include CLI reason, action reason, action message, patch, and state hashes.
-- [ ] Return `LOG_WRITE_FAILED` without rolling back state writes.
+- [x] Implement JSONL log append.
+- [x] Implement `rp log`.
+- [x] Include CLI reason, action reason, action message, patch, and state hashes.
+- [x] Return `LOG_WRITE_FAILED` without rolling back state writes.
 
 ## Phase 8: Examples And Tests
 
@@ -89,7 +89,7 @@ The repository has clear file targets for the next implementation phase
 
 ## Current Next Step
 
-Start Phase 6 by implementing summary selection, `rp summary`, action/summary listing, and JSON Schema export via `rp schema`.
+Start Phase 8 by completing the life-sim example, adding example docs, and broadening integration coverage.
 
 ## Architecture Notes
 

@@ -21,7 +21,7 @@ export function registerMigrateCommand(program: Command): void {
     .command("migrate")
     .description("Migrate state to the current schema version.")
     .action(async (_options, command) => {
-      await runCommand(command, async ({ paths, pretty, dryRun }) => {
+      await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
         await withFileLock(paths.lockPath, async () => {
           const module = await loadModule(paths.modulePath);
           const envelope = await readStateFile(paths.statePath);
@@ -65,6 +65,7 @@ export function registerMigrateCommand(program: Command): void {
               type: "migrate",
               fromVersion,
               toVersion,
+              ...(reason === undefined ? {} : { reason }),
               stateHashBefore: hashState(envelope.state),
               stateHashAfter: hashState(nextState)
             });

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+*.log
+*.log.jsonl
+*.state.json
+*.lock
+.DS_Store

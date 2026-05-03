@@ -1,0 +1,20 @@
+{
+  "name": "rp-cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @rp-cli/core && npm run build -w @rp-cli/cli",
+    "typecheck": "npm run typecheck -w @rp-cli/core && npm run build -w @rp-cli/core && npm run typecheck -w @rp-cli/cli",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

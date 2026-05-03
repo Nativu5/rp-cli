@@ -229,10 +229,7 @@ async function createWorkspace(): Promise<{
   return { cwd, modulePath, statePath };
 }
 
-async function initWorkspace(workspace: {
-  modulePath: string;
-  statePath: string;
-}): Promise<void> {
+async function initWorkspace(workspace: { modulePath: string; statePath: string }): Promise<void> {
   const result = await runCli([
     "--module",
     workspace.modulePath,

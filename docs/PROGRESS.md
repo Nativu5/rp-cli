@@ -81,15 +81,15 @@ The repository has clear file targets for the next implementation phase
 
 ## Phase 8: Examples And Tests
 
-- [ ] Complete `examples/life-sim/rp.module.ts`.
-- [ ] Add `examples/life-sim/README.md`.
-- [ ] Add unit tests for core runtime behavior.
-- [ ] Add CLI integration tests.
-- [ ] Cover invalid input, invalid patch, schema violation, migration, and log cases.
+- [x] Complete `examples/life-sim/rp.module.ts`.
+- [x] Add `examples/life-sim/README.md`.
+- [x] Add unit tests for core runtime behavior.
+- [x] Add CLI integration tests.
+- [x] Cover invalid input, invalid patch, schema violation, migration, and log cases.
 
 ## Current Next Step
 
-Start Phase 8 by completing the life-sim example, adding example docs, and broadening integration coverage.
+All planned MVP phases are complete; next step is review, cleanup, and release-readiness hardening.
 
 ## Architecture Notes
 

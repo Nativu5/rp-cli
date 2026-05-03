@@ -10,13 +10,30 @@ const MemorySchema = z.object({
 });
 
 const StateSchema = z.object({
-  profile: z.object({}).catchall(z.unknown()).default({}),
-  mood: z.object({}).catchall(z.unknown()).default({}),
+  profile: z
+    .object({
+      name: z.string().optional(),
+      age: z.number().optional(),
+      personality: z.array(z.string()).optional()
+    })
+    .catchall(z.unknown())
+    .default({}),
+  mood: z
+    .object({
+      label: z.string().optional(),
+      valence: z.number().min(-1).max(1).optional(),
+      arousal: z.number().min(0).max(1).optional(),
+      stress: z.number().min(0).max(1).optional()
+    })
+    .catchall(z.unknown())
+    .default({}),
   relationships: z
     .record(
       z.string(),
       z
         .object({
+          affection: z.number().min(0).max(100).optional(),
+          trust: z.number().min(0).max(100).optional(),
           notes: z.array(z.string()).default([])
         })
         .catchall(z.unknown())
@@ -66,6 +83,26 @@ export default defineModule({
           message: "Memory recorded."
         };
       }
+    },
+    setMood: {
+      description: "Update current mood.",
+      input: z.object({
+        label: z.string().optional(),
+        valence: z.number().min(-1).max(1).optional(),
+        arousal: z.number().min(0).max(1).optional(),
+        stress: z.number().min(0).max(1).optional()
+      }),
+      run({ input }) {
+        return {
+          patch: Object.entries(input).map(([key, value]) => ({
+            op: "add",
+            path: `/mood/${key}`,
+            value
+          })),
+          reason: "Mood fields were updated.",
+          message: "Mood updated."
+        };
+      }
     }
   },
   summaries: {
@@ -73,7 +110,17 @@ export default defineModule({
       return {
         profile: state.profile,
         mood: state.mood,
+        relationshipCount: Object.keys(state.relationships).length,
         pinnedMemories: state.memories.filter((memory) => memory.pinned)
+      };
+    },
+    prompt({ state }) {
+      return {
+        character: state.profile,
+        currentMood: state.mood,
+        importantMemories: state.memories
+          .filter((memory) => memory.pinned)
+          .map((memory) => memory.text)
       };
     }
   }

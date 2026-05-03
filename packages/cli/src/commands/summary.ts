@@ -16,35 +16,26 @@ export function registerSummaryCommand(program: Command): void {
     .description("Run or list module summaries.")
     .argument("[name]", "summary name")
     .option("--list", "list available summaries")
-    .action(
-      async (
-        name: string | undefined,
-        options: { list?: boolean },
-        command
-      ) => {
-        await runCommand(command, async ({ paths, pretty }) => {
-          const module = await loadModule(paths.modulePath);
+    .action(async (name: string | undefined, options: { list?: boolean }, command) => {
+      await runCommand(command, async ({ paths, pretty }) => {
+        const module = await loadModule(paths.modulePath);
 
-          if (options.list) {
-            writeJson(listSummaries(module.summaries), pretty);
-            return;
-          }
+        if (options.list) {
+          writeJson(listSummaries(module.summaries), pretty);
+          return;
+        }
 
-          const summary = findSummary(module.summaries, name);
-          const envelope = validateStateFile(
-            module,
-            await readStateFile(paths.statePath)
-          );
+        const summary = findSummary(module.summaries, name);
+        const envelope = validateStateFile(module, await readStateFile(paths.statePath));
 
-          writeJson(
-            await runSummary({
-              summary: summary.run,
-              state: envelope.state,
-              meta: envelope.rp
-            }),
-            pretty
-          );
-        });
-      }
-    );
+        writeJson(
+          await runSummary({
+            summary: summary.run,
+            state: envelope.state,
+            meta: envelope.rp
+          }),
+          pretty
+        );
+      });
+    });
 }

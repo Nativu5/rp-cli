@@ -19,14 +19,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "fast-json-patch": "latest",
-    "fs-extra": "latest",
-    "nanoid": "latest",
-    "proper-lockfile": "latest",
-    "zod": "^3.25.0",
-    "zod-to-json-schema": "latest"
+    "fast-json-patch": "^3.1.1"
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "latest"
+    "zod": "^4.4.2"
   }
 }

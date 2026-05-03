@@ -1,5 +1,4 @@
 export * from "./action.js";
-export * from "./defineModule.js";
 export * from "./errors.js";
 export * from "./log.js";
 export * from "./migration.js";

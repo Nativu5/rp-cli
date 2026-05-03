@@ -21,4 +21,14 @@ export function assertActionReturn(value: unknown): asserts value is RpActionRet
       "action must return { patch, reason?, message? }"
     );
   }
+
+  const result = value as Partial<RpActionReturn>;
+
+  if (result.reason !== undefined && typeof result.reason !== "string") {
+    throw new RpError("ACTION_RETURN_INVALID", "action reason must be a string");
+  }
+
+  if (result.message !== undefined && typeof result.message !== "string") {
+    throw new RpError("ACTION_RETURN_INVALID", "action message must be a string");
+  }
 }

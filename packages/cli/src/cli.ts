@@ -17,8 +17,8 @@ export function createProgram(): Command {
     .name("rp")
     .description("Zod-based command line state runtime for AI agents.")
     .version("0.0.0")
-    .option("--module <path>", "module file path", "./rp.module.ts")
-    .option("--state <path>", "state file path", "./rp.state.json")
+    .option("--module <path>", "module file path")
+    .option("--state <path>", "state file path")
     .option("--pretty", "pretty-print JSON output")
     .option("--dry-run", "preview write commands without persisting")
     .option("--reason <text>", "write reason for audit logs");

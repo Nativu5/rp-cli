@@ -80,6 +80,57 @@ describe("state lifecycle CLI", () => {
     expect(result.json.state).toEqual({ value: "ready", count: 1 });
   });
 
+  it("uses environment paths when CLI paths are omitted", async () => {
+    const workspace = await createWorkspace();
+    const previousModule = process.env.RP_MODULE;
+    const previousState = process.env.RP_STATE;
+    process.env.RP_MODULE = workspace.modulePath;
+    process.env.RP_STATE = workspace.statePath;
+
+    try {
+      const result = await runCli(["init"]);
+
+      expect(result.exitCode).toBeUndefined();
+      expect(result.json.rp.module).toBe("phase-three");
+      expect(JSON.parse(await readFile(workspace.statePath, "utf8"))).toEqual(
+        result.json
+      );
+    } finally {
+      restoreEnv("RP_MODULE", previousModule);
+      restoreEnv("RP_STATE", previousState);
+    }
+  });
+
+  it("uses CLI paths before environment paths", async () => {
+    const workspace = await createWorkspace();
+    const envWorkspace = await createWorkspace();
+    const previousModule = process.env.RP_MODULE;
+    const previousState = process.env.RP_STATE;
+    process.env.RP_MODULE = envWorkspace.modulePath;
+    process.env.RP_STATE = envWorkspace.statePath;
+
+    try {
+      const result = await runCli([
+        "--module",
+        workspace.modulePath,
+        "--state",
+        workspace.statePath,
+        "init"
+      ]);
+
+      expect(result.exitCode).toBeUndefined();
+      expect(JSON.parse(await readFile(workspace.statePath, "utf8"))).toEqual(
+        result.json
+      );
+      await expect(readFile(envWorkspace.statePath, "utf8")).rejects.toMatchObject({
+        code: "ENOENT"
+      });
+    } finally {
+      restoreEnv("RP_MODULE", previousModule);
+      restoreEnv("RP_STATE", previousState);
+    }
+  });
+
   it("validates a current state file", async () => {
     const workspace = await createWorkspace();
     await runCli([
@@ -234,6 +285,15 @@ async function createWorkspace(): Promise<{
   );
 
   return { cwd, modulePath, statePath };
+}
+
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
 }
 
 async function runCli(args: string[]): Promise<{

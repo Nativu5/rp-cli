@@ -70,7 +70,10 @@ export function validateAuthorState<TState>(
   if (!parsed.success) {
     throw new RpError("VALIDATION_ERROR", "state failed validation", {
       issues: parsed.error.issues.map((issue) => ({
-        path: issue.path.length === 0 ? "/" : `/${issue.path.join("/")}`,
+        path:
+          issue.path.length === 0
+            ? "/"
+            : `/${issue.path.map((part) => String(part)).join("/")}`,
         message: issue.message
       }))
     });

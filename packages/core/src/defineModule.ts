@@ -1,6 +1,16 @@
 import { parseModule } from "./moduleParser.js";
-import type { RpModule } from "./types.js";
+import type {
+  AnyZodSchema,
+  RpModule,
+  RpModuleDefinition,
+  SchemaOutput
+} from "./types.js";
 
-export function defineModule<TState>(module: RpModule<TState>): RpModule<TState> {
-  return parseModule(module) as RpModule<TState>;
+export function defineModule<
+  TStateSchema extends AnyZodSchema,
+  TActionInputs extends Record<string, AnyZodSchema> = Record<string, never>
+>(
+  module: RpModuleDefinition<TStateSchema, TActionInputs>
+): RpModule<SchemaOutput<TStateSchema>> {
+  return parseModule(module) as RpModule<SchemaOutput<TStateSchema>>;
 }

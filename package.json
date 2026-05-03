@@ -8,13 +8,14 @@
   ],
   "scripts": {
     "build": "npm run build -w @rp-cli/core && npm run build -w @rp-cli/cli",
-    "typecheck": "npm run typecheck -w @rp-cli/core && npm run build -w @rp-cli/core && npm run typecheck -w @rp-cli/cli",
+    "typecheck": "npm run typecheck -w @rp-cli/core && npm run build -w @rp-cli/core && npm run typecheck -w @rp-cli/cli && tsc -p tsconfig.examples.json --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "latest",
     "tsx": "latest",
     "typescript": "latest",
-    "vitest": "latest"
+    "vitest": "latest",
+    "zod": "^4.4.2"
   }
 }

@@ -1,8 +1,11 @@
 import type { Operation } from "fast-json-patch";
-import type { ZodType } from "zod";
+import type { output, ZodType } from "zod";
 
 export type JsonPatchOperation = Operation;
 export type JsonPatch = JsonPatchOperation[];
+export type MaybePromise<T> = T | Promise<T>;
+export type AnyZodSchema = ZodType<unknown, unknown>;
+export type SchemaOutput<TSchema extends AnyZodSchema> = output<TSchema>;
 
 export interface RpMeta {
   module: string;
@@ -33,19 +36,39 @@ export interface RpActionReturn {
 
 export interface RpAction<TState = unknown, TInput = unknown> {
   description: string;
-  input: ZodType<TInput>;
+  input: ZodType<TInput, unknown>;
   run(args: {
     state: Readonly<TState>;
     input: TInput;
     meta: RpMeta;
     ctx: RpActionContext;
-  }): RpActionReturn | Promise<RpActionReturn>;
+  }): MaybePromise<RpActionReturn>;
 }
+
+export interface RpActionDefinition<
+  TState = unknown,
+  TInputSchema extends AnyZodSchema = AnyZodSchema
+> {
+  description: string;
+  input: TInputSchema;
+  run(args: {
+    state: Readonly<TState>;
+    input: SchemaOutput<TInputSchema>;
+    meta: RpMeta;
+    ctx: RpActionContext;
+  }): MaybePromise<RpActionReturn>;
+}
+
+export type RpActionDefinitions<TState, TActions> = {
+  [TName in keyof TActions]: TActions[TName] extends AnyZodSchema
+    ? RpActionDefinition<TState, TActions[TName]>
+    : never;
+};
 
 export type RpSummaryFunction<TState = unknown> = (args: {
   state: Readonly<TState>;
   meta: RpMeta;
-}) => unknown | Promise<unknown>;
+}) => MaybePromise<unknown>;
 
 export interface RpSummaryObject<TState = unknown> {
   description?: string;
@@ -63,7 +86,7 @@ export interface RpMigration<TState = unknown> {
     toVersion: number;
     meta: RpMeta;
     ctx: RpMigrationContext;
-  }): TState | Promise<TState>;
+  }): MaybePromise<TState>;
 }
 
 export interface RpModule<TState = unknown> {
@@ -71,13 +94,29 @@ export interface RpModule<TState = unknown> {
   version: number;
   state: {
     version: number;
-    schema: ZodType<TState>;
-    defaults: () => TState | Promise<TState>;
+    schema: ZodType<TState, unknown>;
+    defaults: () => MaybePromise<TState>;
     migrate?: RpMigration<TState>;
   };
   actions?: Record<string, RpAction<TState, unknown>>;
   summaries?: Record<string, RpSummary<TState>>;
 }
+
+export type RpModuleDefinition<
+  TStateSchema extends AnyZodSchema,
+  TActionInputs extends Record<string, AnyZodSchema> = Record<string, never>
+> = {
+  name: string;
+  version: number;
+  state: {
+    version: number;
+    schema: TStateSchema;
+    defaults: () => MaybePromise<SchemaOutput<TStateSchema>>;
+    migrate?: RpMigration<SchemaOutput<TStateSchema>>;
+  };
+  actions?: RpActionDefinitions<SchemaOutput<TStateSchema>, TActionInputs>;
+  summaries?: Record<string, RpSummary<SchemaOutput<TStateSchema>>>;
+};
 
 export interface RpPaths {
   modulePath: string;

@@ -7,6 +7,7 @@ import { defineModule } from "@rp-cli/core";
 import {
   RpError,
   assertCurrentSchemaVersion,
+  exportStateSchema,
   loadModule,
   parseModule,
   parseEnvelope,
@@ -181,6 +182,30 @@ describe("runtime foundations", () => {
         code: "WRITE_FAILED",
         message: "boom"
       }
+    });
+  });
+
+  it("exports Zod 4 state schemas as JSON Schema", () => {
+    const module = defineModule({
+      name: "schema-export",
+      version: 1,
+      state: {
+        version: 1,
+        schema: z.object({
+          value: z.string()
+        }),
+        defaults: () => ({ value: "ready" })
+      }
+    });
+
+    expect(exportStateSchema(module)).toMatchObject({
+      type: "object",
+      properties: {
+        value: {
+          type: "string"
+        }
+      },
+      required: ["value"]
     });
   });
 });

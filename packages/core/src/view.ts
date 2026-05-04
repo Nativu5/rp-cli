@@ -1,5 +1,5 @@
 import { RpError } from "./errors.js";
-import { cloneModelForUserCode } from "./modelAccess.js";
+import { cloneModelForUserCode } from "./model.js";
 import type { RpMeta, RpView, RpViewFunction } from "./types.js";
 
 export function findView(

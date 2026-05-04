@@ -1,6 +1,6 @@
 export { RpError, toErrorShape } from "./errors.js";
 export type { RpErrorCode, RpErrorShape } from "./errors.js";
-export { resolveRpPaths } from "./modelFile.js";
+export { resolveRpPaths } from "./model.js";
 export {
   applyUpdateOperation,
   exportActionInputSchemaOperation,

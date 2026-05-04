@@ -6,9 +6,8 @@ import { z } from "zod";
 import { defineModule } from "@rp-cli/core";
 import { RpError, toErrorShape } from "../packages/core/src/errors.js";
 import { compareSchemaVersions } from "../packages/core/src/migration.js";
-import { loadModule } from "../packages/core/src/moduleLoader.js";
-import { parseModule } from "../packages/core/src/moduleParser.js";
-import { resolveRpPaths } from "../packages/core/src/modelFile.js";
+import { loadModule, parseModule } from "../packages/core/src/moduleParser.js";
+import { resolveRpPaths } from "../packages/core/src/model.js";
 import { readModelOperation } from "../packages/core/src/runtime.js";
 import { parseEnvelope, validateModelFile } from "../packages/core/src/validation.js";
 

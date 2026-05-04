@@ -8,10 +8,10 @@ import {
   pathExists,
   readModelFile,
   updateModelEnvelope,
-  writeJsonFileAtomic
-} from "./modelFile.js";
-import { withModelLock } from "./modelLock.js";
-import { loadModule } from "./moduleLoader.js";
+  writeJsonFileAtomic,
+  withModelLock
+} from "./model.js";
+import { loadModule } from "./moduleParser.js";
 import { applyJsonPatch, assertJsonPatch } from "./patch.js";
 import type { AnyZodSchema, JsonPatch, RpModelFile, RpPaths } from "./types.js";
 import { assertModuleCompatibility, validateRoleModel, validateModelFile } from "./validation.js";

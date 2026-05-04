@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { RpError } from "./errors.js";
 import { assertJsonPatch } from "./patch.js";
-import { cloneModelForUserCode } from "./modelAccess.js";
+import { cloneModelForUserCode } from "./model.js";
 import { formatZodIssues } from "./validation.js";
 import type { RpAction, RpActionReturn, RpMeta, RpRuntimeContext } from "./types.js";
 

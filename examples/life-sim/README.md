@@ -4,7 +4,7 @@ This example shows how a creator can use RP CLI to turn character and story desi
 
 The module is intentionally small. It is not a complete game engine. It demonstrates the core pattern:
 
-```text
+```
 creator design -> Zod model schema -> semantic actions -> prompt views -> CLI usage by agents
 ```
 
@@ -14,35 +14,53 @@ Imagine a slice-of-life roleplay centered on Mio. The agent needs to remember st
 
 - who Mio is
 - how she currently feels
-- what she remembers
+- what she is wearing
 - how relationships are changing
 - which facts are important enough to bring into future prompts
 
 Without a model runtime, those facts tend to drift or disappear inside chat history. RP CLI gives the creator a place to make those facts explicit.
 
+## Design Philosophy
+
+RP CLI leverages Linux's filesystem concept: **each directory represents a character**. When you operate inside a character's directory, you don't need to specify a filename—the module is found automatically.
+
+```
+examples/life-sim/
+├── src/
+│   └── rp.module.ts     # Shared module source
+├── mio/                  # Mio's directory
+│   └── rp.module.ts@     # symlink -> src/rp.module.ts
+│   └── model.json        # Mio's state
+└── yuki/                 # Yuki's directory
+    └── rp.module.ts@     # symlink -> src/rp.module.ts
+    └── model.json        # Yuki's state
+```
+
 ## Creator View
 
-The creator owns `rp.module.ts`.
+The creator owns `src/rp.module.ts`.
 
-In this example, the creator maps story design into four model areas:
+In this example, the creator maps story design into model areas:
 
 | Story design concept   | Model field     | Purpose                                                                    |
 | ---------------------- | --------------- | -------------------------------------------------------------------------- |
 | Character sheet        | `profile`       | Stable character canon such as name, age, and personality.                 |
 | Current emotional beat | `mood`          | Scene-local emotional signals such as label, valence, arousal, and stress. |
 | Social continuity      | `relationships` | Per-character relationship data and notes.                                 |
-| Long-term continuity   | `memories`      | Durable facts the agent can recall later.                                  |
+| Numeric state          | `level`         | Simple numeric state for experience, power level, etc.                     |
+| Clothing state         | `wear`          | Four-slot wardrobe: top, bottom, underwear, accessory.                    |
 
-The creator also exposes semantic actions:
+The creator exposes semantic actions:
 
-- `remember`: add a durable memory after the user establishes a meaningful fact.
 - `setMood`: update emotional signals after a scene beat changes.
+- `setLevel` / `levelUp`: manage numeric state.
+- `setWear` / `removeWear`: manage clothing slots.
 
 These actions are intentionally higher-level than raw JSON Patch. An agent can call `setMood` without knowing exactly how mood is stored.
 
 The module also exposes views:
 
-- `default`: a general overview of character, mood, relationship count, and pinned memories.
+- `default`: a general overview of character, mood, relationship count, level, and wear.
 - `prompt`: compact prompt-facing context for the next generated scene.
 
 That split is the key creative benefit: creators decide what belongs in canon, what operations are safe, and what context an agent should see.
@@ -51,46 +69,45 @@ That split is the key creative benefit: creators decide what belongs in canon, w
 
 The user or agent does not edit `rp.module.ts`. It uses the `rp` CLI.
 
-Initialize a model file:
+Each character lives in its own directory. Operating from within a character's directory means the module is discovered automatically:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json init
+# Initialize Mio's model
+cd examples/life-sim/mio
+rp init
+
+# Update Mio's mood
+rp action setMood '{"label":"happy","valence":0.8}'
+
+# Set level
+rp action setLevel '{"level":5}'
+
+# Level up
+rp action levelUp
+
+# Update clothing
+rp action setWear '{"top":"blue blouse","bottom":"gray skirt"}'
+
+# Remove an item
+rp action removeWear '{"slot":"accessory"}'
+
+# Read prompt context
+rp view prompt
+
+# Read raw model
+rp model
 ```
 
-Record a durable memory:
+## Working Across Characters
+
+You can target a specific character's directory without changing your working directory:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json \
-  --reason "User established this preference." \
-  action remember '{"text":"Mio likes rainy afternoons.","tags":["preference"],"pinned":true}'
+rp --dir examples/life-sim/mio action setMood '{"label":"sleepy"}'
+rp --dir examples/life-sim/yuki action setMood '{"label":"energetic"}'
 ```
 
-Update the current mood:
-
-```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json \
-  --reason "Scene tone changed." \
-  action setMood '{"label":"flustered but happy","valence":0.68,"arousal":0.4}'
-```
-
-Read prompt-ready context:
-
-```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json view prompt
-```
-
-Read raw role model:
-
-```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json model
-```
-
-Query pinned memories with `jq`:
-
-```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json model \
-  | jq '.memories[] | select(.pinned == true)'
-```
+This makes it natural to manage multiple characters without filename arguments.
 
 ## Discovery
 
@@ -99,25 +116,25 @@ Agents can discover what the module supports.
 List actions:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts action --list
+rp action --list
 ```
 
 List views:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts view --list
+rp view --list
 ```
 
 Inspect the `setMood` input schema:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts action setMood --schema
+rp action setMood --schema
 ```
 
 Inspect the full model schema:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts model --schema
+rp model --schema
 ```
 
 ## Low-Level Update Escape Hatch
@@ -125,9 +142,7 @@ rp --module examples/life-sim/rp.module.ts model --schema
 Creators can prefer semantic actions, while still allowing a low-level JSON Patch escape hatch when needed:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json \
-  --reason "Scene moved to a quiet moment." \
-  update '[{"op":"replace","path":"/mood/label","value":"calm"}]'
+rp update '[{"op":"replace","path":"/mood/label","value":"calm"}]'
 ```
 
 Patch paths are relative to the role model root, so `/mood/label` means `model.mood.label`.
@@ -137,19 +152,19 @@ Patch paths are relative to the role model root, so `/mood/label` means `model.m
 Validate the current model:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json validate
+rp validate
 ```
 
 Migrate an older model file:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json migrate
+rp migrate
 ```
 
 Read recent audit logs:
 
 ```bash
-rp --module examples/life-sim/rp.module.ts --model mio.json log --limit 5
+rp log --limit 5
 ```
 
 `--reason` is stored in the audit log, not in role model. This helps an agent or creator understand why a change happened without polluting the story model.
@@ -159,16 +174,15 @@ rp --module examples/life-sim/rp.module.ts --model mio.json log --limit 5
 For an agent session, set paths once:
 
 ```bash
-export RP_MODULE=examples/life-sim/rp.module.ts
-export RP_MODEL=mio.json
+export RP_DIR=examples/life-sim/mio
 ```
 
 Then the agent can use concise commands:
 
 ```bash
 rp view prompt
-rp action remember '{"text":"Mio likes rain.","pinned":true}'
-rp action setMood '{"label":"calm","valence":0.3}'
+rp action setLevel '{"level":10}'
+rp action setWear '{"top":"sweater"}'
 rp log --limit 5
 ```
 
@@ -180,6 +194,7 @@ For creators, that means:
 
 - character canon can be modeled explicitly
 - scene-changing events can become named actions
+- numeric and complex state (like clothing) can be managed semantically
 - prompt context can be curated instead of copied manually
 - schema changes can be migrated
 - model changes can be audited with reasons

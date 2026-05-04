@@ -2,17 +2,6 @@ import { defineModule } from "@rp-cli/core";
 import {} from "@rp-cli/core";
 import { z } from "zod";
 
-// Memories are durable story facts the agent should be able to recall later.
-const MemorySchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  tags: z.array(z.string()).default([]),
-  pinned: z.boolean().default(false),
-  createdAt: z.string()
-});
-
-// The model schema is the creator's world model: character canon, current scene signals,
-// relationships, and long-term memory.
 const ModelSchema = z.object({
   profile: z
     .object({
@@ -43,7 +32,16 @@ const ModelSchema = z.object({
         .catchall(z.unknown())
     )
     .default({}),
-  memories: z.array(MemorySchema).default([])
+  level: z.number().min(0).default(1),
+  wear: z
+    .object({
+      top: z.string().optional(),
+      bottom: z.string().optional(),
+      underwear: z.string().optional(),
+      accessory: z.string().optional()
+    })
+    .catchall(z.unknown())
+    .default({})
 });
 
 export default defineModule({
@@ -52,45 +50,16 @@ export default defineModule({
   model: {
     version: 1,
     schema: ModelSchema,
-    // Defaults describe a new save file before the story has accumulated canon.
     defaults: () => ({
       profile: {},
       mood: {},
       relationships: {},
-      memories: []
+      level: 1,
+      wear: {}
     }),
-    // Migration keeps older save files usable when the creator evolves the schema.
     migrate: ({ model }) => ModelSchema.parse(model)
   },
   actions: {
-    remember: {
-      description: "Add a long-term memory.",
-      input: z.object({
-        text: z.string(),
-        tags: z.array(z.string()).default([]),
-        pinned: z.boolean().default(false)
-      }),
-      run({ input, ctx }) {
-        // Actions return JSON Patch; the runtime applies, validates, writes, and logs it.
-        return {
-          patch: [
-            {
-              op: "add",
-              path: "/memories/-",
-              value: {
-                id: ctx.id("mem"),
-                text: input.text,
-                tags: input.tags,
-                pinned: input.pinned,
-                createdAt: ctx.now()
-              }
-            }
-          ],
-          reason: "A long-term memory was added.",
-          message: "Memory recorded."
-        };
-      }
-    },
     setMood: {
       description: "Update current mood.",
       input: z.object({
@@ -100,7 +69,6 @@ export default defineModule({
         stress: z.number().min(0).max(1).optional()
       }),
       run({ input }) {
-        // Mood updates are semantic writes, so agents do not need to know raw patch paths.
         return {
           patch: Object.entries(input).map(([key, value]) => ({
             op: "add",
@@ -111,24 +79,81 @@ export default defineModule({
           message: "Mood updated."
         };
       }
+    },
+    setLevel: {
+      description: "Set the character level.",
+      input: z.object({
+        level: z.number().min(0)
+      }),
+      run({ input }) {
+        return {
+          patch: [{ op: "replace", path: "/level", value: input.level }],
+          reason: "Level was updated.",
+          message: `Level set to ${input.level}.`
+        };
+      }
+    },
+    levelUp: {
+      description: "Increase level by 1.",
+      input: z.object({}),
+      run({ model }) {
+        return {
+          patch: [{ op: "replace", path: "/level", value: model.level + 1 }],
+          reason: "Character leveled up.",
+          message: `Level up! Now level ${model.level + 1}.`
+        };
+      }
+    },
+    setWear: {
+      description: "Update worn items.",
+      input: z.object({
+        top: z.string().optional(),
+        bottom: z.string().optional(),
+        underwear: z.string().optional(),
+        accessory: z.string().optional()
+      }),
+      run({ input }) {
+        return {
+          patch: Object.entries(input).map(([key, value]) => ({
+            op: "replace",
+            path: `/wear/${key}`,
+            value
+          })),
+          reason: "Wear was updated.",
+          message: "Wear updated."
+        };
+      }
+    },
+    removeWear: {
+      description: "Remove a worn item.",
+      input: z.object({
+        slot: z.enum(["top", "bottom", "underwear", "accessory"])
+      }),
+      run({ input }) {
+        return {
+          patch: [{ op: "remove", path: `/wear/${input.slot}` }],
+          reason: `${input.slot} was removed.`,
+          message: `${input.slot} removed.`
+        };
+      }
     }
   },
   views: {
     default({ model }) {
-      // Views are read-only projections for agents; they do not need to mirror raw model.
       return {
         profile: model.profile,
         mood: model.mood,
         relationshipCount: Object.keys(model.relationships).length,
-        pinnedMemories: model.memories.filter((memory) => memory.pinned)
+        level: model.level,
+        wear: model.wear
       };
     },
     prompt({ model }) {
-      // The prompt view shapes model data into compact context for the next generated scene.
       return {
         character: model.profile,
         currentMood: model.mood,
-        importantMemories: model.memories.filter((memory) => memory.pinned).map((memory) => memory.text)
+        level: model.level,
+        wearing: model.wear
       };
     }
   }

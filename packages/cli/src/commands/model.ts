@@ -11,10 +11,7 @@ export function registerModelCommand(program: Command): void {
     .option("--schema", "output the model JSON Schema")
     .action(async (options: { raw?: boolean; schema?: boolean }, command) => {
       await runCommand(command, async ({ paths, pretty }) => {
-        writeJson(
-          await readModelOperation({ paths, raw: options.raw, schema: options.schema }),
-          pretty
-        );
+        writeJson(await readModelOperation({ paths, raw: options.raw, schema: options.schema }), pretty);
       });
     });
 }

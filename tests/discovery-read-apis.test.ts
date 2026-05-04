@@ -15,14 +15,7 @@ describe("discovery and read APIs", () => {
   it("lists views without reading the model file", async () => {
     const workspace = await createWorkspace();
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "view",
-      "--list"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "--list"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual([
@@ -39,13 +32,7 @@ describe("discovery and read APIs", () => {
     await writeCurrentModel(workspace.modelPath);
     const before = await readFile(workspace.modelPath, "utf8");
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "view"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({
@@ -61,14 +48,7 @@ describe("discovery and read APIs", () => {
     const workspace = await createWorkspace();
     await writeCurrentModel(workspace.modelPath);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "view",
-      "debug"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "debug"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({
@@ -84,13 +64,7 @@ describe("discovery and read APIs", () => {
     const workspace = await createWorkspace({ includeDefaultView: false });
     await writeCurrentModel(workspace.modelPath);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "view"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({
@@ -106,13 +80,7 @@ describe("discovery and read APIs", () => {
     });
     await writeCurrentModel(workspace.modelPath);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "view"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({
@@ -128,14 +96,7 @@ describe("discovery and read APIs", () => {
     const workspace = await createWorkspace();
     await writeCurrentModel(workspace.modelPath);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "view",
-      "explode"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "explode"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.json).toMatchObject({
@@ -150,14 +111,7 @@ describe("discovery and read APIs", () => {
     await writeCurrentModel(workspace.modelPath);
     const before = await readFile(workspace.modelPath, "utf8");
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "view",
-      "mutate"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "mutate"]);
 
     expect(result.exitCode).toBe(1);
     expect(result.json).toMatchObject({
@@ -293,9 +247,7 @@ async function createWorkspace(
             "    },"
           ]
         : []),
-      ...(includeBriefView
-        ? ["    brief: ({ model }) => ({ kind: 'brief', value: model.value }),"]
-        : []),
+      ...(includeBriefView ? ["    brief: ({ model }) => ({ kind: 'brief', value: model.value }),"] : []),
       "    debug: {",
       '      description: "Debug view.",',
       "      run: ({ model, meta }) => ({ raw: model, schemaVersion: meta.schemaVersion })",

@@ -64,10 +64,7 @@ describe("write commands", () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
     const patchPath = path.join(workspace.cwd, "patch.json");
-    await writeFile(
-      patchPath,
-      JSON.stringify([{ op: "replace", path: "/value", value: "from-file" }])
-    );
+    await writeFile(patchPath, JSON.stringify([{ op: "replace", path: "/value", value: "from-file" }]));
 
     const result = await runCli([
       "--module",
@@ -142,14 +139,7 @@ describe("write commands", () => {
   it("lists actions without reading the model file", async () => {
     const workspace = await createWorkspace();
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "action",
-      "--list"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "action", "--list"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual(
@@ -485,13 +475,7 @@ async function createWorkspace(): Promise<{
 }
 
 async function initWorkspace(workspace: { modulePath: string; modelPath: string }): Promise<void> {
-  const result = await runCli([
-    "--module",
-    workspace.modulePath,
-    "--model",
-    workspace.modelPath,
-    "init"
-  ]);
+  const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
   expect(result.exitCode).toBeUndefined();
 }

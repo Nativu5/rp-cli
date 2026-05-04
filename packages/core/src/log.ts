@@ -10,10 +10,7 @@ export function hashModel(value: unknown): string {
   return `sha256:${digest}`;
 }
 
-export async function appendJsonLogEntry(
-  logPath: string,
-  entry: Record<string, unknown>
-): Promise<void> {
+export async function appendJsonLogEntry(logPath: string, entry: Record<string, unknown>): Promise<void> {
   try {
     await mkdir(path.dirname(logPath), { recursive: true });
     await appendFile(logPath, `${JSON.stringify(entry)}\n`, "utf8");

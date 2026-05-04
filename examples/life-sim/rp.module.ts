@@ -127,9 +127,7 @@ export default defineModule({
       return {
         character: model.profile,
         currentMood: model.mood,
-        importantMemories: model.memories
-          .filter((memory) => memory.pinned)
-          .map((memory) => memory.text)
+        importantMemories: model.memories.filter((memory) => memory.pinned).map((memory) => memory.text)
       };
     }
   }

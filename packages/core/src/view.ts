@@ -12,8 +12,7 @@ export function findView(
     throw new RpError("VIEW_NOT_FOUND", "module does not define views");
   }
 
-  const name =
-    requestedName ?? (views?.default ? "default" : views?.brief ? "brief" : entries[0]?.[0]);
+  const name = requestedName ?? (views?.default ? "default" : views?.brief ? "brief" : entries[0]?.[0]);
   const view = name ? views?.[name] : undefined;
 
   if (!name || !view) {
@@ -27,9 +26,7 @@ export function findView(
   return { name, run: view.run };
 }
 
-export function listViews(
-  views: Record<string, RpView> | undefined
-): { name: string; description?: string }[] {
+export function listViews(views: Record<string, RpView> | undefined): { name: string; description?: string }[] {
   return Object.entries(views ?? {}).map(([name, view]) => {
     if (typeof view === "function" || view.description === undefined) {
       return { name };

@@ -60,9 +60,7 @@ describe("architecture contracts", () => {
 
     for (const file of files) {
       const content = await readFile(new URL(file, commandDirectory), "utf8");
-      const importMatches = content.matchAll(
-        /import\s+\{([\s\S]*?)\}\s+from\s+"@rp-cli\/core\/internal"/g
-      );
+      const importMatches = content.matchAll(/import\s+\{([\s\S]*?)\}\s+from\s+"@rp-cli\/core\/internal"/g);
 
       for (const match of importMatches) {
         const importedNames = match[1]
@@ -78,9 +76,7 @@ describe("architecture contracts", () => {
 
         for (const importedName of importedNames) {
           if (!allowedImports.has(importedName)) {
-            offenders.push(
-              `${path.join("packages/cli/src/commands", file)} imports ${importedName}`
-            );
+            offenders.push(`${path.join("packages/cli/src/commands", file)} imports ${importedName}`);
           }
         }
       }

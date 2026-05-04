@@ -133,7 +133,5 @@ function isVersion(value: unknown): value is number {
 }
 
 function isZodType(value: unknown): boolean {
-  return (
-    isRecord(value) && typeof value.parse === "function" && typeof value.safeParse === "function"
-  );
+  return isRecord(value) && typeof value.parse === "function" && typeof value.safeParse === "function";
 }

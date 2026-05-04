@@ -40,10 +40,7 @@ export function assertActionReturn(value: unknown): asserts value is RpActionRet
   }
 }
 
-export function validateActionInput<TInput>(
-  action: RpAction<unknown, TInput>,
-  input: unknown
-): TInput {
+export function validateActionInput<TInput>(action: RpAction<unknown, TInput>, input: unknown): TInput {
   const parsed = action.input.safeParse(input);
 
   if (!parsed.success) {

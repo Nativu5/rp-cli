@@ -3,10 +3,7 @@ import type { RpMeta, RpMigration, RpRuntimeContext } from "./types.js";
 
 export type SchemaVersionComparison = "older" | "current" | "newer";
 
-export function compareSchemaVersions(
-  fromVersion: number,
-  toVersion: number
-): SchemaVersionComparison {
+export function compareSchemaVersions(fromVersion: number, toVersion: number): SchemaVersionComparison {
   if (fromVersion < toVersion) {
     return "older";
   }

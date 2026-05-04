@@ -15,13 +15,7 @@ describe("creator experience", () => {
   it("lets a creator author a module with only the public core API and use it through the CLI", async () => {
     const workspace = await createWorkspace();
 
-    const initResult = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "init"
-    ]);
+    const initResult = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
     expect(initResult.exitCode).toBeUndefined();
     expect(initResult.json.model).toEqual({
@@ -35,13 +29,7 @@ describe("creator experience", () => {
     expect(actions.exitCode).toBeUndefined();
     expect(actions.json).toEqual([{ name: "setTitle", description: "Set the story title." }]);
 
-    const inputSchema = await runCli([
-      "--module",
-      workspace.modulePath,
-      "action",
-      "setTitle",
-      "--schema"
-    ]);
+    const inputSchema = await runCli(["--module", workspace.modulePath, "action", "setTitle", "--schema"]);
     expect(inputSchema.exitCode).toBeUndefined();
     expect(inputSchema.json).toMatchObject({
       type: "object",
@@ -87,13 +75,7 @@ describe("creator experience", () => {
       sceneCount: 0
     });
 
-    const validateResult = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "validate"
-    ]);
+    const validateResult = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "validate"]);
     expect(validateResult.exitCode).toBeUndefined();
     expect(validateResult.json).toEqual({
       valid: true,

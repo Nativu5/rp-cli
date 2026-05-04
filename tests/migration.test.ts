@@ -16,13 +16,7 @@ describe("migration CLI", () => {
     const workspace = await createWorkspace();
     await writeOldModel(workspace.modelPath);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "migrate"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "migrate"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toMatchObject({
@@ -47,9 +41,7 @@ describe("migration CLI", () => {
     });
     expect(envelope.rp.updatedAt).not.toBe("2026-05-03T12:00:00.000Z");
 
-    const logLines = (await readFile(`${workspace.modelPath}.log.jsonl`, "utf8"))
-      .trim()
-      .split("\n");
+    const logLines = (await readFile(`${workspace.modelPath}.log.jsonl`, "utf8")).trim().split("\n");
     expect(logLines).toHaveLength(1);
     expect(JSON.parse(logLines[0])).toMatchObject({
       type: "migrate",
@@ -94,13 +86,7 @@ describe("migration CLI", () => {
     const workspace = await createWorkspace();
     await writeCurrentModel(workspace.modelPath);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "migrate"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "migrate"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({
@@ -125,13 +111,7 @@ describe("migration CLI", () => {
       migratedAt: "2026-05-03T12:00:00.000Z"
     });
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "migrate"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "migrate"]);
 
     expect(result.exitCode).toBe(5);
     expect(result.json).toMatchObject({
@@ -149,13 +129,7 @@ describe("migration CLI", () => {
     const workspace = await createWorkspace({ includeMigrate: false });
     await writeOldModel(workspace.modelPath);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "migrate"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "migrate"]);
 
     expect(result.exitCode).toBe(5);
     expect(result.json).toMatchObject({
@@ -173,13 +147,7 @@ describe("migration CLI", () => {
     const workspace = await createWorkspace();
     await writeModelEnvelope(workspace.modelPath, 1, { value: "old" }, "other-module");
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "migrate"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "migrate"]);
 
     expect(result.exitCode).toBe(3);
     expect(result.json).toMatchObject({

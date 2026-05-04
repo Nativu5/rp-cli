@@ -17,11 +17,7 @@ export const RpModelEnvelopeSchema = z.object({
 });
 
 export function parseEnvelope(value: unknown): RpModelFile {
-  if (
-    typeof value !== "object" ||
-    value === null ||
-    !Object.prototype.hasOwnProperty.call(value, "model")
-  ) {
+  if (typeof value !== "object" || value === null || !Object.prototype.hasOwnProperty.call(value, "model")) {
     throw new RpError("MODEL_ENVELOPE_INVALID", "model envelope is invalid", {
       issues: ["model field is required"]
     });
@@ -41,33 +37,25 @@ export function parseEnvelope(value: unknown): RpModelFile {
   };
 }
 
-export function assertCurrentSchemaVersion(
-  meta: RpMeta,
-  module: { model: { version: number } }
-): void {
+export function assertCurrentSchemaVersion(meta: RpMeta, module: { model: { version: number } }): void {
   const comparison = compareSchemaVersions(meta.schemaVersion, module.model.version);
 
   if (comparison === "older") {
-    throw new RpError(
-      "MIGRATION_REQUIRED",
-      "model schemaVersion is older than module model.version",
-      { fromVersion: meta.schemaVersion, toVersion: module.model.version }
-    );
+    throw new RpError("MIGRATION_REQUIRED", "model schemaVersion is older than module model.version", {
+      fromVersion: meta.schemaVersion,
+      toVersion: module.model.version
+    });
   }
 
   if (comparison === "newer") {
-    throw new RpError(
-      "MIGRATION_FAILED",
-      "model schemaVersion is newer than module model.version",
-      { fromVersion: meta.schemaVersion, toVersion: module.model.version }
-    );
+    throw new RpError("MIGRATION_FAILED", "model schemaVersion is newer than module model.version", {
+      fromVersion: meta.schemaVersion,
+      toVersion: module.model.version
+    });
   }
 }
 
-export function assertModuleCompatibility(
-  meta: RpMeta,
-  module: { name: string; version: number }
-): void {
+export function assertModuleCompatibility(meta: RpMeta, module: { name: string; version: number }): void {
   if (meta.module !== module.name) {
     throw new RpError("MODULE_MODEL_MISMATCH", "model file belongs to a different module", {
       modelModule: meta.module,
@@ -98,10 +86,7 @@ export function formatZodIssues(issues: readonly z.core.$ZodIssue[]): {
   }));
 }
 
-export function validateModelFile<TModel>(
-  module: RpModule<TModel>,
-  envelope: RpModelFile
-): RpModelFile<TModel> {
+export function validateModelFile<TModel>(module: RpModule<TModel>, envelope: RpModelFile): RpModelFile<TModel> {
   assertModuleCompatibility(envelope.rp, module);
   assertCurrentSchemaVersion(envelope.rp, module);
 

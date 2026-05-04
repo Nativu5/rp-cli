@@ -8,20 +8,10 @@ import type { RpModule, RpPaths, RpModelFile } from "./types.js";
 export const DEFAULT_MODULE_PATH = "./rp.module.ts";
 export const DEFAULT_MODEL_PATH = "./rp.model.json";
 
-export function resolveRpPaths(options: {
-  modulePath?: string;
-  modelPath?: string;
-  cwd?: string;
-}): RpPaths {
+export function resolveRpPaths(options: { modulePath?: string; modelPath?: string; cwd?: string }): RpPaths {
   const cwd = options.cwd ?? process.cwd();
-  const modulePath = path.resolve(
-    cwd,
-    options.modulePath ?? process.env.RP_MODULE ?? DEFAULT_MODULE_PATH
-  );
-  const modelPath = path.resolve(
-    cwd,
-    options.modelPath ?? process.env.RP_MODEL ?? DEFAULT_MODEL_PATH
-  );
+  const modulePath = path.resolve(cwd, options.modulePath ?? process.env.RP_MODULE ?? DEFAULT_MODULE_PATH);
+  const modelPath = path.resolve(cwd, options.modelPath ?? process.env.RP_MODEL ?? DEFAULT_MODEL_PATH);
 
   return {
     modulePath,
@@ -107,11 +97,7 @@ export function updateModelEnvelope<TModel>(
   };
 }
 
-export async function writeJsonFileAtomic(
-  filePath: string,
-  value: unknown,
-  pretty = true
-): Promise<void> {
+export async function writeJsonFileAtomic(filePath: string, value: unknown, pretty = true): Promise<void> {
   const directory = path.dirname(filePath);
   const temporaryPath = path.join(
     directory,

@@ -155,11 +155,7 @@ describe("life-sim example", () => {
     const workspace = await createWorkspace();
     await runLifeSim(workspace.modelPath, ["init"]);
 
-    const invalidInput = await runLifeSim(workspace.modelPath, [
-      "action",
-      "setMood",
-      '{"valence":2}'
-    ]);
+    const invalidInput = await runLifeSim(workspace.modelPath, ["action", "setMood", '{"valence":2}']);
     expect(invalidInput.exitCode).toBe(6);
     expect(invalidInput.json).toMatchObject({
       error: {

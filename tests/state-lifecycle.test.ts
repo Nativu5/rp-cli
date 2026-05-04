@@ -14,13 +14,7 @@ afterEach(() => {
 describe("model lifecycle CLI", () => {
   it("initializes a model file from module defaults", async () => {
     const workspace = await createWorkspace();
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "init"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toMatchObject({
@@ -44,13 +38,7 @@ describe("model lifecycle CLI", () => {
     const workspace = await createWorkspace();
     await writeFile(workspace.modelPath, JSON.stringify({ existing: true }));
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "init"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
     expect(result.exitCode).toBe(8);
     expect(result.json).toMatchObject({
@@ -67,14 +55,7 @@ describe("model lifecycle CLI", () => {
     const workspace = await createWorkspace();
     await writeFile(workspace.modelPath, JSON.stringify({ existing: true }));
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "init",
-      "--force"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init", "--force"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json.model).toEqual({ value: "ready", count: 1 });
@@ -108,13 +89,7 @@ describe("model lifecycle CLI", () => {
     process.env.RP_MODEL = envWorkspace.modelPath;
 
     try {
-      const result = await runCli([
-        "--module",
-        workspace.modulePath,
-        "--model",
-        workspace.modelPath,
-        "init"
-      ]);
+      const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
       expect(result.exitCode).toBeUndefined();
       expect(JSON.parse(await readFile(workspace.modelPath, "utf8"))).toEqual(result.json);
@@ -131,13 +106,7 @@ describe("model lifecycle CLI", () => {
     const workspace = await createWorkspace();
     await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "validate"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "validate"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({
@@ -167,13 +136,7 @@ describe("model lifecycle CLI", () => {
       })
     );
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "validate"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "validate"]);
 
     expect(result.exitCode).toBe(5);
     expect(result.json).toMatchObject({
@@ -187,13 +150,7 @@ describe("model lifecycle CLI", () => {
     const workspace = await createWorkspace();
     await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
-    const modelResult = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "model"
-    ]);
+    const modelResult = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "model"]);
     const rawResult = await runCli([
       "--module",
       workspace.modulePath,
@@ -220,13 +177,7 @@ describe("model lifecycle CLI", () => {
     const workspace = await createWorkspace();
     await writeFile(`${workspace.modelPath}.lock`, "locked");
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "init"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
     expect(result.exitCode).toBe(8);
     expect(result.json).toMatchObject({
@@ -242,13 +193,7 @@ describe("model lifecycle CLI", () => {
     const staleTime = new Date(Date.now() - 60_000);
     await utimes(`${workspace.modelPath}.lock`, staleTime, staleTime);
 
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "init"
-    ]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json.model).toEqual({ value: "ready", count: 1 });
@@ -262,13 +207,7 @@ describe("model lifecycle CLI", () => {
     }, 50);
 
     try {
-      const result = await runCli([
-        "--module",
-        workspace.modulePath,
-        "--model",
-        workspace.modelPath,
-        "init"
-      ]);
+      const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
       expect(result.exitCode).toBeUndefined();
       expect(result.json.model).toEqual({ value: "ready", count: 1 });

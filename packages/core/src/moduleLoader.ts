@@ -44,18 +44,12 @@ export async function loadModule(modulePath: string): Promise<RpModule> {
 function assertSupportedModuleExtension(modulePath: string): void {
   const extension = path.extname(modulePath);
 
-  if (
-    SUPPORTED_MODULE_EXTENSIONS.includes(extension as (typeof SUPPORTED_MODULE_EXTENSIONS)[number])
-  ) {
+  if (SUPPORTED_MODULE_EXTENSIONS.includes(extension as (typeof SUPPORTED_MODULE_EXTENSIONS)[number])) {
     return;
   }
 
-  throw new RpError(
-    "MODULE_INVALID",
-    `unsupported module file extension: ${extension || "(none)"}`,
-    {
-      extension,
-      supportedExtensions: [...SUPPORTED_MODULE_EXTENSIONS]
-    }
-  );
+  throw new RpError("MODULE_INVALID", `unsupported module file extension: ${extension || "(none)"}`, {
+    extension,
+    supportedExtensions: [...SUPPORTED_MODULE_EXTENSIONS]
+  });
 }

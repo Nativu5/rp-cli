@@ -8,10 +8,7 @@ export async function readJsonInput(options: {
   description: string;
 }): Promise<unknown> {
   if (options.inline !== undefined && options.filePath !== undefined) {
-    throw new RpError(
-      options.errorCode,
-      `provide either inline ${options.description} JSON or --file, not both`
-    );
+    throw new RpError(options.errorCode, `provide either inline ${options.description} JSON or --file, not both`);
   }
 
   if (options.filePath !== undefined) {
@@ -37,13 +34,9 @@ async function readJsonFromFile(
   try {
     content = await readFile(filePath, "utf8");
   } catch (error) {
-    throw new RpError(
-      options.errorCode,
-      `failed to read ${options.description} file: ${filePath}`,
-      {
-        cause: error instanceof Error ? error.message : String(error)
-      }
-    );
+    throw new RpError(options.errorCode, `failed to read ${options.description} file: ${filePath}`, {
+      cause: error instanceof Error ? error.message : String(error)
+    });
   }
 
   return parseJson(content, options);

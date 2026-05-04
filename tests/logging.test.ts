@@ -29,13 +29,7 @@ describe("operation logging", () => {
 
     expect(patchResult.exitCode).toBeUndefined();
 
-    const logResult = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "log"
-    ]);
+    const logResult = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "log"]);
 
     expect(logResult.exitCode).toBeUndefined();
     expect(logResult.json).toHaveLength(1);
@@ -66,13 +60,7 @@ describe("operation logging", () => {
       '{"value":"from-action"}'
     ]);
 
-    const logResult = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "log"
-    ]);
+    const logResult = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "log"]);
 
     expect(logResult.exitCode).toBeUndefined();
     expect(logResult.json).toHaveLength(1);
@@ -143,13 +131,7 @@ describe("operation logging", () => {
       '[{"op":"replace","path":"/value","value":"preview"}]'
     ]);
 
-    const logResult = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--model",
-      workspace.modelPath,
-      "log"
-    ]);
+    const logResult = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "log"]);
 
     expect(logResult.exitCode).toBeUndefined();
     expect(logResult.json).toEqual([]);
@@ -230,13 +212,7 @@ async function createWorkspace(): Promise<{
 }
 
 async function initWorkspace(workspace: { modulePath: string; modelPath: string }): Promise<void> {
-  const result = await runCli([
-    "--module",
-    workspace.modulePath,
-    "--model",
-    workspace.modelPath,
-    "init"
-  ]);
+  const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 
   expect(result.exitCode).toBeUndefined();
 }

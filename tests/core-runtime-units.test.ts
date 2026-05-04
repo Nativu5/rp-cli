@@ -57,9 +57,7 @@ describe("core runtime units", () => {
       }
     };
 
-    const nextModel = applyJsonPatch(model, [
-      { op: "replace", path: "/mood/label", value: "happy" }
-    ]);
+    const nextModel = applyJsonPatch(model, [{ op: "replace", path: "/mood/label", value: "happy" }]);
 
     expect(nextModel).toEqual({
       mood: {
@@ -82,11 +80,7 @@ describe("core runtime units", () => {
 
     await writeFile(
       logPath,
-      [
-        JSON.stringify({ type: "update", index: 1 }),
-        JSON.stringify({ type: "action", index: 2 }),
-        ""
-      ].join("\n")
+      [JSON.stringify({ type: "update", index: 1 }), JSON.stringify({ type: "action", index: 2 }), ""].join("\n")
     );
 
     expect(await readJsonLogEntries(logPath)).toEqual([

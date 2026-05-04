@@ -45,10 +45,7 @@ export interface RpAction<TModel = unknown, TInput = unknown> {
   }): MaybePromise<RpActionReturn>;
 }
 
-export interface RpActionDefinition<
-  TModel = unknown,
-  TInputSchema extends AnyZodSchema = AnyZodSchema
-> {
+export interface RpActionDefinition<TModel = unknown, TInputSchema extends AnyZodSchema = AnyZodSchema> {
   description: string;
   input: TInputSchema;
   run(args: {
@@ -60,9 +57,7 @@ export interface RpActionDefinition<
 }
 
 export type RpActionDefinitions<TModel, TActions> = {
-  [TName in keyof TActions]: TActions[TName] extends AnyZodSchema
-    ? RpActionDefinition<TModel, TActions[TName]>
-    : never;
+  [TName in keyof TActions]: TActions[TName] extends AnyZodSchema ? RpActionDefinition<TModel, TActions[TName]> : never;
 };
 
 export type RpViewFunction<TModel = unknown> = (args: {

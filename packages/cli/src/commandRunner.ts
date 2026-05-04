@@ -17,10 +17,7 @@ export interface CommandContext {
   reason?: string;
 }
 
-export async function runCommand(
-  command: Command,
-  run: (ctx: CommandContext) => Promise<void>
-): Promise<void> {
+export async function runCommand(command: Command, run: (ctx: CommandContext) => Promise<void>): Promise<void> {
   const options = command.optsWithGlobals<GlobalCliOptions>();
   const context: CommandContext = {
     paths: resolveRpPaths({
@@ -75,13 +72,9 @@ function exitCodeForError(error: unknown): number {
 }
 
 function isModuleError(code: RpErrorCode): boolean {
-  return (
-    code === "MODULE_NOT_FOUND" || code === "MODULE_INVALID" || code === "MODULE_MODEL_MISMATCH"
-  );
+  return code === "MODULE_NOT_FOUND" || code === "MODULE_INVALID" || code === "MODULE_MODEL_MISMATCH";
 }
 
 function isModelFileError(code: RpErrorCode): boolean {
-  return (
-    code === "MODEL_NOT_FOUND" || code === "MODEL_INVALID_JSON" || code === "MODEL_ENVELOPE_INVALID"
-  );
+  return code === "MODEL_NOT_FOUND" || code === "MODEL_INVALID_JSON" || code === "MODEL_ENVELOPE_INVALID";
 }

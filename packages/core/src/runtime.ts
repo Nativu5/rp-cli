@@ -17,10 +17,7 @@ import type { AnyZodSchema, JsonPatch, RpModelFile, RpPaths } from "./types.js";
 import { assertModuleCompatibility, validateAuthorModel, validateModelFile } from "./validation.js";
 import { findView, listViews, runView } from "./view.js";
 
-export async function initModelOperation(input: {
-  paths: RpPaths;
-  force?: boolean;
-}): Promise<RpModelFile> {
+export async function initModelOperation(input: { paths: RpPaths; force?: boolean }): Promise<RpModelFile> {
   return withModelLock(input.paths, async () => {
     if (!input.force && (await pathExists(input.paths.modelPath))) {
       throw new RpError("WRITE_FAILED", `model file already exists: ${input.paths.modelPath}`);
@@ -53,11 +50,7 @@ export async function validateModelOperation(input: { paths: RpPaths }): Promise
   };
 }
 
-export async function readModelOperation(input: {
-  paths: RpPaths;
-  raw?: boolean;
-  schema?: boolean;
-}): Promise<unknown> {
+export async function readModelOperation(input: { paths: RpPaths; raw?: boolean; schema?: boolean }): Promise<unknown> {
   const module = await loadModule(input.paths.modulePath);
 
   if (input.schema) {
@@ -80,10 +73,7 @@ export async function listActionSummariesOperation(input: {
   }));
 }
 
-export async function exportActionInputSchemaOperation(input: {
-  paths: RpPaths;
-  name: string;
-}): Promise<unknown> {
+export async function exportActionInputSchemaOperation(input: { paths: RpPaths; name: string }): Promise<unknown> {
   const module = await loadModule(input.paths.modulePath);
   const action = findAction(module.actions, input.name);
 
@@ -191,9 +181,7 @@ export async function applyUpdateOperation(input: {
   });
 }
 
-export async function listViewsOperation(input: {
-  paths: RpPaths;
-}): Promise<{ name: string; description?: string }[]> {
+export async function listViewsOperation(input: { paths: RpPaths }): Promise<{ name: string; description?: string }[]> {
   const module = await loadModule(input.paths.modulePath);
 
   return listViews(module.views);
@@ -211,11 +199,7 @@ export async function runViewOperation(input: { paths: RpPaths; name?: string })
   });
 }
 
-export async function migrateModelOperation(input: {
-  paths: RpPaths;
-  dryRun?: boolean;
-  reason?: string;
-}): Promise<{
+export async function migrateModelOperation(input: { paths: RpPaths; dryRun?: boolean; reason?: string }): Promise<{
   fromVersion: number;
   toVersion: number;
   model: unknown;
@@ -235,11 +219,10 @@ export async function migrateModelOperation(input: {
     }
 
     if (comparison === "newer") {
-      throw new RpError(
-        "MIGRATION_FAILED",
-        "model schemaVersion is newer than module model.version",
-        { fromVersion, toVersion }
-      );
+      throw new RpError("MIGRATION_FAILED", "model schemaVersion is newer than module model.version", {
+        fromVersion,
+        toVersion
+      });
     }
 
     const ctx = createRuntimeContext();
@@ -274,10 +257,7 @@ export async function migrateModelOperation(input: {
   });
 }
 
-export async function readLogOperation(input: {
-  paths: RpPaths;
-  limit?: number;
-}): Promise<unknown[]> {
+export async function readLogOperation(input: { paths: RpPaths; limit?: number }): Promise<unknown[]> {
   const entries = await readJsonLogEntries(input.paths.logPath);
 
   return input.limit === undefined ? entries : entries.slice(-input.limit);

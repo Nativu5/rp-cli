@@ -26,7 +26,7 @@ function parseLimit(value: string | undefined): number | undefined {
   const limit = Number(value);
 
   if (!Number.isInteger(limit) || limit < 0) {
-    throw new RpError("STATE_INVALID_JSON", "log limit must be a non-negative integer");
+    throw new RpError("MODEL_INVALID_JSON", "log limit must be a non-negative integer");
   }
 
   return limit;

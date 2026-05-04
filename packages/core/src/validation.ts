@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { RpError } from "./errors.js";
 import { compareSchemaVersions } from "./migration.js";
-import type { RpMeta, RpModule, RpStateFile } from "./types.js";
+import type { RpMeta, RpModule, RpModelFile } from "./types.js";
 
 export const RpMetaSchema = z.object({
   module: z.string().min(1),
@@ -11,55 +11,55 @@ export const RpMetaSchema = z.object({
   updatedAt: z.string().datetime()
 });
 
-export const RpStateEnvelopeSchema = z.object({
+export const RpModelEnvelopeSchema = z.object({
   rp: RpMetaSchema,
-  state: z.unknown()
+  model: z.unknown()
 });
 
-export function parseEnvelope(value: unknown): RpStateFile {
+export function parseEnvelope(value: unknown): RpModelFile {
   if (
     typeof value !== "object" ||
     value === null ||
-    !Object.prototype.hasOwnProperty.call(value, "state")
+    !Object.prototype.hasOwnProperty.call(value, "model")
   ) {
-    throw new RpError("STATE_ENVELOPE_INVALID", "state envelope is invalid", {
-      issues: ["state field is required"]
+    throw new RpError("MODEL_ENVELOPE_INVALID", "model envelope is invalid", {
+      issues: ["model field is required"]
     });
   }
 
-  const parsed = RpStateEnvelopeSchema.safeParse(value);
+  const parsed = RpModelEnvelopeSchema.safeParse(value);
 
   if (!parsed.success) {
-    throw new RpError("STATE_ENVELOPE_INVALID", "state envelope is invalid", {
+    throw new RpError("MODEL_ENVELOPE_INVALID", "model envelope is invalid", {
       issues: parsed.error.issues
     });
   }
 
   return {
     rp: parsed.data.rp,
-    state: parsed.data.state
+    model: parsed.data.model
   };
 }
 
 export function assertCurrentSchemaVersion(
   meta: RpMeta,
-  module: { state: { version: number } }
+  module: { model: { version: number } }
 ): void {
-  const comparison = compareSchemaVersions(meta.schemaVersion, module.state.version);
+  const comparison = compareSchemaVersions(meta.schemaVersion, module.model.version);
 
   if (comparison === "older") {
     throw new RpError(
       "MIGRATION_REQUIRED",
-      "state schemaVersion is older than module state.version",
-      { fromVersion: meta.schemaVersion, toVersion: module.state.version }
+      "model schemaVersion is older than module model.version",
+      { fromVersion: meta.schemaVersion, toVersion: module.model.version }
     );
   }
 
   if (comparison === "newer") {
     throw new RpError(
       "MIGRATION_FAILED",
-      "state schemaVersion is newer than module state.version",
-      { fromVersion: meta.schemaVersion, toVersion: module.state.version }
+      "model schemaVersion is newer than module model.version",
+      { fromVersion: meta.schemaVersion, toVersion: module.model.version }
     );
   }
 }
@@ -69,18 +69,18 @@ export function assertModuleCompatibility(
   module: { name: string; version: number }
 ): void {
   if (meta.module !== module.name) {
-    throw new RpError("MODULE_STATE_MISMATCH", "state file belongs to a different module", {
-      stateModule: meta.module,
+    throw new RpError("MODULE_MODEL_MISMATCH", "model file belongs to a different module", {
+      modelModule: meta.module,
       module: module.name
     });
   }
 }
 
-export function validateAuthorState<TState>(module: RpModule<TState>, state: unknown): TState {
-  const parsed = module.state.schema.safeParse(state);
+export function validateAuthorModel<TModel>(module: RpModule<TModel>, model: unknown): TModel {
+  const parsed = module.model.schema.safeParse(model);
 
   if (!parsed.success) {
-    throw new RpError("VALIDATION_ERROR", "state failed validation", {
+    throw new RpError("VALIDATION_ERROR", "model failed validation", {
       issues: formatZodIssues(parsed.error.issues)
     });
   }
@@ -98,15 +98,15 @@ export function formatZodIssues(issues: readonly z.core.$ZodIssue[]): {
   }));
 }
 
-export function validateStateFile<TState>(
-  module: RpModule<TState>,
-  envelope: RpStateFile
-): RpStateFile<TState> {
+export function validateModelFile<TModel>(
+  module: RpModule<TModel>,
+  envelope: RpModelFile
+): RpModelFile<TModel> {
   assertModuleCompatibility(envelope.rp, module);
   assertCurrentSchemaVersion(envelope.rp, module);
 
   return {
     rp: envelope.rp,
-    state: validateAuthorState(module, envelope.state)
+    model: validateAuthorModel(module, envelope.model)
   };
 }

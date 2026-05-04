@@ -12,39 +12,39 @@ afterEach(() => {
 });
 
 describe("discovery and read APIs", () => {
-  it("lists summaries without reading the state file", async () => {
+  it("lists views without reading the model file", async () => {
     const workspace = await createWorkspace();
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "summary",
+      "--model",
+      workspace.modelPath,
+      "view",
       "--list"
     ]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual([
-      { name: "default", description: "Full summary." },
+      { name: "default", description: "Full view." },
       { name: "brief" },
-      { name: "debug", description: "Debug summary." },
+      { name: "debug", description: "Debug view." },
       { name: "explode", description: "Throw an error." },
-      { name: "mutate", description: "Mutate state directly." }
+      { name: "mutate", description: "Mutate model directly." }
     ]);
   });
 
-  it("runs the default summary against the validated current state", async () => {
+  it("runs the default view against the validated current model", async () => {
     const workspace = await createWorkspace();
-    await writeCurrentState(workspace.statePath);
-    const before = await readFile(workspace.statePath, "utf8");
+    await writeCurrentModel(workspace.modelPath);
+    const before = await readFile(workspace.modelPath, "utf8");
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "summary"
+      "--model",
+      workspace.modelPath,
+      "view"
     ]);
 
     expect(result.exitCode).toBeUndefined();
@@ -54,19 +54,19 @@ describe("discovery and read APIs", () => {
       count: 1,
       module: "discovery-phase"
     });
-    expect(await readFile(workspace.statePath, "utf8")).toBe(before);
+    expect(await readFile(workspace.modelPath, "utf8")).toBe(before);
   });
 
-  it("runs a named summary", async () => {
+  it("runs a named view", async () => {
     const workspace = await createWorkspace();
-    await writeCurrentState(workspace.statePath);
+    await writeCurrentModel(workspace.modelPath);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "summary",
+      "--model",
+      workspace.modelPath,
+      "view",
       "debug"
     ]);
 
@@ -80,16 +80,16 @@ describe("discovery and read APIs", () => {
     });
   });
 
-  it("falls back to the brief summary when no default summary exists", async () => {
-    const workspace = await createWorkspace({ includeDefaultSummary: false });
-    await writeCurrentState(workspace.statePath);
+  it("falls back to the brief view when no default view exists", async () => {
+    const workspace = await createWorkspace({ includeDefaultView: false });
+    await writeCurrentModel(workspace.modelPath);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "summary"
+      "--model",
+      workspace.modelPath,
+      "view"
     ]);
 
     expect(result.exitCode).toBeUndefined();
@@ -99,19 +99,19 @@ describe("discovery and read APIs", () => {
     });
   });
 
-  it("falls back to the first summary when default and brief are missing", async () => {
+  it("falls back to the first view when default and brief are missing", async () => {
     const workspace = await createWorkspace({
-      includeDefaultSummary: false,
-      includeBriefSummary: false
+      includeDefaultView: false,
+      includeBriefView: false
     });
-    await writeCurrentState(workspace.statePath);
+    await writeCurrentModel(workspace.modelPath);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "summary"
+      "--model",
+      workspace.modelPath,
+      "view"
     ]);
 
     expect(result.exitCode).toBeUndefined();
@@ -124,59 +124,60 @@ describe("discovery and read APIs", () => {
     });
   });
 
-  it("reports summary runtime errors", async () => {
+  it("reports view runtime errors", async () => {
     const workspace = await createWorkspace();
-    await writeCurrentState(workspace.statePath);
+    await writeCurrentModel(workspace.modelPath);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "summary",
+      "--model",
+      workspace.modelPath,
+      "view",
       "explode"
     ]);
 
     expect(result.exitCode).toBe(1);
     expect(result.json).toMatchObject({
       error: {
-        code: "SUMMARY_RUNTIME_ERROR"
+        code: "VIEW_RUNTIME_ERROR"
       }
     });
   });
 
-  it("rejects summaries that directly mutate state", async () => {
+  it("rejects views that directly mutate model", async () => {
     const workspace = await createWorkspace();
-    await writeCurrentState(workspace.statePath);
-    const before = await readFile(workspace.statePath, "utf8");
+    await writeCurrentModel(workspace.modelPath);
+    const before = await readFile(workspace.modelPath, "utf8");
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "summary",
+      "--model",
+      workspace.modelPath,
+      "view",
       "mutate"
     ]);
 
     expect(result.exitCode).toBe(1);
     expect(result.json).toMatchObject({
       error: {
-        code: "SUMMARY_RUNTIME_ERROR"
+        code: "VIEW_RUNTIME_ERROR"
       }
     });
-    expect(await readFile(workspace.statePath, "utf8")).toBe(before);
+    expect(await readFile(workspace.modelPath, "utf8")).toBe(before);
   });
 
-  it("outputs the state JSON Schema by default", async () => {
+  it("outputs the model JSON Schema from model --schema", async () => {
     const workspace = await createWorkspace();
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "schema"
+      "--model",
+      workspace.modelPath,
+      "model",
+      "--schema"
     ]);
 
     expect(result.exitCode).toBeUndefined();
@@ -190,40 +191,17 @@ describe("discovery and read APIs", () => {
     });
   });
 
-  it("outputs the state JSON Schema for the explicit state target", async () => {
+  it("outputs an action input JSON Schema from action --schema", async () => {
     const workspace = await createWorkspace();
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "schema",
-      "state"
-    ]);
-
-    expect(result.exitCode).toBeUndefined();
-    expect(result.json).toMatchObject({
-      type: "object",
-      properties: {
-        value: { type: "string" },
-        count: { type: "number" }
-      },
-      required: ["value", "count"]
-    });
-  });
-
-  it("outputs an action input JSON Schema", async () => {
-    const workspace = await createWorkspace();
-
-    const result = await runCli([
-      "--module",
-      workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "schema",
+      "--model",
+      workspace.modelPath,
       "action",
-      "setValue"
+      "setValue",
+      "--schema"
     ]);
 
     expect(result.exitCode).toBeUndefined();
@@ -242,11 +220,11 @@ describe("discovery and read APIs", () => {
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "schema",
+      "--model",
+      workspace.modelPath,
       "action",
-      "missing"
+      "missing",
+      "--schema"
     ]);
 
     expect(result.exitCode).toBe(6);
@@ -260,36 +238,36 @@ describe("discovery and read APIs", () => {
 
 async function createWorkspace(
   options: {
-    includeDefaultSummary?: boolean;
-    includeBriefSummary?: boolean;
+    includeDefaultView?: boolean;
+    includeBriefView?: boolean;
   } = {}
 ): Promise<{
   cwd: string;
   modulePath: string;
-  statePath: string;
+  modelPath: string;
 }> {
   const cwd = await mkdtemp(path.join(tmpdir(), "rp-cli-discovery-"));
   await mkdir(cwd, { recursive: true });
   const modulePath = path.join(cwd, "rp.module.ts");
-  const statePath = path.join(cwd, "rp.state.json");
-  const includeDefaultSummary = options.includeDefaultSummary ?? true;
-  const includeBriefSummary = options.includeBriefSummary ?? true;
+  const modelPath = path.join(cwd, "rp.model.json");
+  const includeDefaultView = options.includeDefaultView ?? true;
+  const includeBriefView = options.includeBriefView ?? true;
 
   await writeFile(
     modulePath,
     [
       'import { defineModule } from "@rp-cli/core";',
       'import { z } from "zod";',
-      "const StateSchema = z.object({",
+      "const ModelSchema = z.object({",
       "  value: z.string(),",
       "  count: z.number()",
       "});",
       "export default defineModule({",
       '  name: "discovery-phase",',
       "  version: 4,",
-      "  state: {",
+      "  model: {",
       "    version: 1,",
-      "    schema: StateSchema,",
+      "    schema: ModelSchema,",
       '    defaults: () => ({ value: "ready", count: 1 })',
       "  },",
       "  actions: {",
@@ -301,36 +279,36 @@ async function createWorkspace(
       "      }",
       "    }",
       "  },",
-      "  summaries: {",
-      ...(includeDefaultSummary
+      "  views: {",
+      ...(includeDefaultView
         ? [
             "    default: {",
-            '      description: "Full summary.",',
-            "      run: ({ state, meta }) => ({",
+            '      description: "Full view.",',
+            "      run: ({ model, meta }) => ({",
             '        kind: "default",',
-            "        value: state.value,",
-            "        count: state.count,",
+            "        value: model.value,",
+            "        count: model.count,",
             "        module: meta.module",
             "      })",
             "    },"
           ]
         : []),
-      ...(includeBriefSummary
-        ? ["    brief: ({ state }) => ({ kind: 'brief', value: state.value }),"]
+      ...(includeBriefView
+        ? ["    brief: ({ model }) => ({ kind: 'brief', value: model.value }),"]
         : []),
       "    debug: {",
-      '      description: "Debug summary.",',
-      "      run: ({ state, meta }) => ({ raw: state, schemaVersion: meta.schemaVersion })",
+      '      description: "Debug view.",',
+      "      run: ({ model, meta }) => ({ raw: model, schemaVersion: meta.schemaVersion })",
       "    },",
       "    explode: {",
       '      description: "Throw an error.",',
       "      run: () => { throw new Error('boom'); }",
       "    },",
       "    mutate: {",
-      '      description: "Mutate state directly.",',
-      "      run: ({ state }) => {",
-      "        state.value = 'mutated';",
-      "        return state;",
+      '      description: "Mutate model directly.",',
+      "      run: ({ model }) => {",
+      "        model.value = 'mutated';",
+      "        return model;",
       "      }",
       "    }",
       "  }",
@@ -338,12 +316,12 @@ async function createWorkspace(
     ].join("\n")
   );
 
-  return { cwd, modulePath, statePath };
+  return { cwd, modulePath, modelPath };
 }
 
-async function writeCurrentState(statePath: string): Promise<void> {
+async function writeCurrentModel(modelPath: string): Promise<void> {
   await writeFile(
-    statePath,
+    modelPath,
     JSON.stringify({
       rp: {
         module: "discovery-phase",
@@ -352,7 +330,7 @@ async function writeCurrentState(statePath: string): Promise<void> {
         createdAt: "2026-05-03T12:00:00.000Z",
         updatedAt: "2026-05-03T12:00:00.000Z"
       },
-      state: {
+      model: {
         value: "ready",
         count: 1
       }

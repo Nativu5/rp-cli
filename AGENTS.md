@@ -1,6 +1,6 @@
 # RP-CLI: 面向 AI Agent 的角色扮演 CLI 框架
 
-**RP CLI 是一个基于 Zod 的命令行状态运行时框架。**
+**RP CLI 是一个基于 Zod 的命令行模型运行时框架。**
 
 ## 技术栈
 
@@ -41,8 +41,10 @@ Node.js + TypeScript + Zod + Commander + fast-json-patch
 │   │       ├── moduleParser.ts
 │   │       ├── patch.ts
 │   │       ├── schema.ts
-│   │       ├── stateFile.ts
-│   │       ├── summary.ts
+│   │       ├── modelFile.ts
+│   │       ├── modelLock.ts
+│   │       ├── modelAccess.ts
+│   │       ├── view.ts
 │   │       ├── types.ts
 │   │       └── validation.ts
 │   └── cli/
@@ -57,10 +59,9 @@ Node.js + TypeScript + Zod + Commander + fast-json-patch
 │               ├── init.ts
 │               ├── log.ts
 │               ├── migrate.ts
-│               ├── patch.ts
-│               ├── schema.ts
-│               ├── state.ts
-│               ├── summary.ts
+│               ├── model.ts
+│               ├── update.ts
+│               ├── view.ts
 │               └── validate.ts
 └── tests/
     ├── state-lifecycle.test.ts
@@ -81,16 +82,16 @@ import { defineModule } from "@rp-cli/core";
 当前 public API 只暴露：
 
 - `defineModule`
-- 创作者需要的类型，如 `RpModule`、`RpAction`、`RpSummary`、`RpMigration`、`JsonPatch`、`RpMeta`
+- 创作者需要的类型，如 `RpModule`、`RpAction`、`RpView`、`RpMigration`、`JsonPatch`、`RpMeta`
 
-不要从 public API 暴露 loader、state file、validation、lock、log 等 runtime-only 工具。
+不要从 public API 暴露 loader、model file、validation、lock、log 等 runtime-only 工具。
 
 ### `@rp-cli/core/internal`
 
 CLI 和 runtime 内部 API。`packages/cli` 应从这里导入内部能力，例如：
 
 ```ts
-import { loadModule, readStateFile } from "@rp-cli/core/internal";
+import { loadModule, readModelFile } from "@rp-cli/core/internal";
 ```
 
 核心运行时包，负责：
@@ -98,17 +99,18 @@ import { loadModule, readStateFile } from "@rp-cli/core/internal";
 - `defineModule.ts`: 创作者 public builder，保持 typed authoring 体验。
 - `moduleParser.ts`: 内部 parser/validator，接收 `unknown`，返回校验后的 `RpModule`。
 - `moduleLoader.ts`: 加载本地 TypeScript `rp.module.ts`，并通过 `parseModule` 校验默认导出。
-- `types.ts`: 定义 `RpModule`、`RpStateFile`、`RpMeta`、`RpAction`、`RpSummary`、`RpMigration`、`JsonPatch` 等公共类型。
+- `types.ts`: 定义 `RpModule`、`RpModelFile`、`RpMeta`、`RpAction`、`RpView`、`RpMigration`、`JsonPatch` 等公共类型。
 - `errors.ts`: 定义 `RpError`、错误码和统一错误 JSON 输出结构。
-- `validation.ts`: 校验 state envelope，并检查 `rp.schemaVersion` 与 `module.state.version`。
-- `stateFile.ts`: 解析 module/state/log/lock 文件路径，读取 state file，创建 envelope，提供原子 JSON 写入。
-- `stateLock.ts`: 基于 `proper-lockfile` 提供 state write lock，支持 stale lock 恢复和短暂重试。
+- `validation.ts`: 校验 model envelope，并检查 `rp.schemaVersion` 与 `module.model.version`。
+- `modelFile.ts`: 解析 module/model/log/lock 文件路径，读取 model file，创建 envelope，提供原子 JSON 写入。
+- `modelLock.ts`: 基于 `proper-lockfile` 提供 model write lock，支持 stale lock 恢复和短暂重试。
+- `modelAccess.ts`: 为 action/view handler 提供 deep-frozen model clone。
 - `patch.ts`: 使用 `fast-json-patch` 校验 JSON Patch。
 - `action.ts`: 查找 action 并校验 action 返回值基础结构。
-- `summary.ts`: 按 default/brief/第一个 summary 的规则查找 summary。
+- `view.ts`: 按 default/brief/第一个 view 的规则查找 view。
 - `migration.ts`: 校验迁移前置条件。
 - `schema.ts`: 导出 Zod schema 对应的 JSON Schema。
-- `log.ts`: 提供 state hash 工具。
+- `log.ts`: 提供 model hash 工具。
 - `index.ts`: 统一导出 public creator API。
 - `internal.ts`: 统一导出 runtime internal API。
 
@@ -119,28 +121,27 @@ import { loadModule, readStateFile } from "@rp-cli/core/internal";
 - `cli.ts`: 创建 Commander program，注册全局参数和命令。
 - `commandRunner.ts`: 解析全局 CLI 参数，统一命令错误处理和 exit code 映射。
 - `output.ts`: 输出 JSON 和错误 JSON。
-- `commands/init.ts`: `rp init`，从 module defaults 初始化 state file，支持 `--force`。
-- `commands/validate.ts`: `rp validate`，验证 envelope、schemaVersion 和 author state。
+- `commands/init.ts`: `rp init`，从 module defaults 初始化 model file，支持 `--force`。
+- `commands/validate.ts`: `rp validate`，验证 envelope、schemaVersion 和 author model。
 - `commands/migrate.ts`: `rp migrate`，执行 schemaVersion 迁移，拒绝跨 module 迁移，支持 `--dry-run` 和日志记录。
-- `commands/state.ts`: `rp state`，输出 author state，支持 `--raw` 输出完整 envelope。
-- `commands/patch.ts`: `rp patch`，应用标准 JSON Patch，验证 patch 后 state，支持 `--file`。
-- `commands/action.ts`: `rp action [name] [input]`，包含 `--list` 和 `--file`。
-- `commands/summary.ts`: `rp summary [name]`，包含 `--list`。
-- `commands/schema.ts`: `rp schema [target] [name]`，导出 state 或 action input JSON Schema。
+- `commands/model.ts`: `rp model`，输出 author model，支持 `--raw` 和 `--schema`。
+- `commands/update.ts`: `rp update`，应用标准 JSON Patch，验证 patch 后 model，支持 `--file`。
+- `commands/action.ts`: `rp action [name] [input]`，包含 `--list`、`--schema` 和 `--file`。
+- `commands/view.ts`: `rp view [name]`，包含 `--list`。
 - `commands/log.ts`: `rp log`，读取 JSONL 审计日志，支持 `--limit`。
 
-不提供独立 `rp actions` 命令；能力发现使用 `rp action --list` 和 `rp summary --list`，单个 action input schema 使用 `rp schema action <name>`。
+不提供独立 `rp actions` 或 `rp schema` 命令；能力发现使用 `rp action --list` 和 `rp view --list`，schema 查询使用 `rp model --schema` 和 `rp action <name> --schema`。
 
 ### `examples/life-sim`
 
 示例创作者模块，当前包含：
 
-- Zod state schema。
-- `state.version`。
-- `state.defaults`。
-- `state.migrate`。
+- Zod model schema。
+- `model.version`。
+- `model.defaults`。
+- `model.migrate`。
 - `remember` action。
-- `default` summary。
+- `default` view。
 
 ### `tests`
 
@@ -148,10 +149,10 @@ import { loadModule, readStateFile } from "@rp-cli/core/internal";
 
 - `scaffold.test.ts`: 验证 workspace/CLI 命令注册和 public API 边界。
 - `runtime-foundations.test.ts`: 验证 core runtime foundation、module loading、envelope 校验和 schema 导出。
-- `state-lifecycle.test.ts`: 验证 `init`、`validate`、`state`、原子写入和 lock 行为。
-- `write-commands.test.ts`: 验证 `patch`、`action`、dry-run、input/return 校验和 state mutation 防护。
+- `state-lifecycle.test.ts`: 验证 `init`、`validate`、`model`、原子写入和 lock 行为。
+- `write-commands.test.ts`: 验证 `update`、`action`、dry-run、input/return 校验和 model mutation 防护。
 - `migration.test.ts`: 验证 migration、schemaVersion 行为和跨 module 拒绝。
-- `discovery-read-apis.test.ts`: 验证 `summary`、`schema` 和 read API。
+- `discovery-read-apis.test.ts`: 验证 `view`、object-local schema 和 read API。
 - `logging.test.ts`: 验证 JSONL audit log。
 - `life-sim-example.test.ts`: 验证示例模块端到端流程。
 

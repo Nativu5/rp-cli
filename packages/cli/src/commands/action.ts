@@ -3,17 +3,18 @@ import {
   appendJsonLogEntry,
   applyJsonPatch,
   createRuntimeContext,
+  exportActionInputSchema,
   findAction,
-  hashState,
+  hashModel,
   loadModule,
-  readStateFile,
+  readModelFile,
   RpError,
   runAction,
-  updateStateEnvelope,
+  updateModelEnvelope,
   validateActionInput,
-  validateAuthorState,
-  validateStateFile,
-  withStateLock,
+  validateAuthorModel,
+  validateModelFile,
+  withModelLock,
   writeJsonFileAtomic
 } from "@rp-cli/core/internal";
 import { readJsonInput } from "../jsonInput.js";
@@ -27,12 +28,13 @@ export function registerActionCommand(program: Command): void {
     .argument("[name]", "action name")
     .argument("[input]", "action input JSON")
     .option("--list", "list available actions")
+    .option("--schema", "output the action input JSON Schema")
     .option("--file <path>", "read action input from a file")
     .action(
       async (
         name: string | undefined,
         inputArgument: string | undefined,
-        options: { list?: boolean; file?: string },
+        options: { list?: boolean; schema?: boolean; file?: string },
         command
       ) => {
         await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
@@ -48,6 +50,12 @@ export function registerActionCommand(program: Command): void {
           }
 
           const action = findAction(module.actions, name);
+
+          if (options.schema) {
+            writeJson(exportActionInputSchema(action), pretty);
+            return;
+          }
+
           const inputJson = await readJsonInput({
             inline: inputArgument,
             filePath: options.file,
@@ -56,12 +64,12 @@ export function registerActionCommand(program: Command): void {
           });
           const input = validateActionInput(action, inputJson);
 
-          await withStateLock(paths, async () => {
-            const envelope = validateStateFile(module, await readStateFile(paths.statePath));
+          await withModelLock(paths, async () => {
+            const envelope = validateModelFile(module, await readModelFile(paths.modelPath));
             const ctx = createRuntimeContext();
             const result = await runAction({
               action,
-              state: envelope.state,
+              model: envelope.model,
               input,
               meta: envelope.rp,
               ctx
@@ -78,14 +86,14 @@ export function registerActionCommand(program: Command): void {
               return;
             }
 
-            const nextState = validateAuthorState(
+            const nextModel = validateAuthorModel(
               module,
-              applyJsonPatch(envelope.state, result.patch)
+              applyJsonPatch(envelope.model, result.patch)
             );
-            const nextEnvelope = updateStateEnvelope(envelope, module, nextState, ctx.now());
+            const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
 
             if (!dryRun) {
-              await writeJsonFileAtomic(paths.statePath, nextEnvelope);
+              await writeJsonFileAtomic(paths.modelPath, nextEnvelope);
               await appendJsonLogEntry(paths.logPath, {
                 id: ctx.id("log"),
                 time: ctx.now(),
@@ -96,8 +104,8 @@ export function registerActionCommand(program: Command): void {
                 ...(result.message === undefined ? {} : { message: result.message }),
                 input,
                 patch: result.patch,
-                stateHashBefore: hashState(envelope.state),
-                stateHashAfter: hashState(nextState)
+                modelHashBefore: hashModel(envelope.model),
+                modelHashAfter: hashModel(nextModel)
               });
             }
 
@@ -105,7 +113,7 @@ export function registerActionCommand(program: Command): void {
               {
                 result: {
                   patch: result.patch,
-                  state: nextState
+                  model: nextModel
                 },
                 ...(result.message === undefined ? {} : { message: result.message })
               },

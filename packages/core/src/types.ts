@@ -15,9 +15,9 @@ export interface RpMeta {
   updatedAt: string;
 }
 
-export interface RpStateFile<TState = unknown> {
+export interface RpModelFile<TModel = unknown> {
   rp: RpMeta;
-  state: TState;
+  model: TModel;
 }
 
 export interface RpRuntimeContext {
@@ -34,11 +34,11 @@ export interface RpActionReturn {
   message?: string;
 }
 
-export interface RpAction<TState = unknown, TInput = unknown> {
+export interface RpAction<TModel = unknown, TInput = unknown> {
   description: string;
   input: ZodType<TInput, unknown>;
   run(args: {
-    state: Readonly<TState>;
+    model: Readonly<TModel>;
     input: TInput;
     meta: RpMeta;
     ctx: RpActionContext;
@@ -46,79 +46,79 @@ export interface RpAction<TState = unknown, TInput = unknown> {
 }
 
 export interface RpActionDefinition<
-  TState = unknown,
+  TModel = unknown,
   TInputSchema extends AnyZodSchema = AnyZodSchema
 > {
   description: string;
   input: TInputSchema;
   run(args: {
-    state: Readonly<TState>;
+    model: Readonly<TModel>;
     input: SchemaOutput<TInputSchema>;
     meta: RpMeta;
     ctx: RpActionContext;
   }): MaybePromise<RpActionReturn>;
 }
 
-export type RpActionDefinitions<TState, TActions> = {
+export type RpActionDefinitions<TModel, TActions> = {
   [TName in keyof TActions]: TActions[TName] extends AnyZodSchema
-    ? RpActionDefinition<TState, TActions[TName]>
+    ? RpActionDefinition<TModel, TActions[TName]>
     : never;
 };
 
-export type RpSummaryFunction<TState = unknown> = (args: {
-  state: Readonly<TState>;
+export type RpViewFunction<TModel = unknown> = (args: {
+  model: Readonly<TModel>;
   meta: RpMeta;
 }) => MaybePromise<unknown>;
 
-export interface RpSummaryObject<TState = unknown> {
+export interface RpViewObject<TModel = unknown> {
   description?: string;
-  run: RpSummaryFunction<TState>;
+  run: RpViewFunction<TModel>;
 }
 
-export type RpSummary<TState = unknown> = RpSummaryFunction<TState> | RpSummaryObject<TState>;
+export type RpView<TModel = unknown> = RpViewFunction<TModel> | RpViewObject<TModel>;
 
-export interface RpMigration<TState = unknown> {
+export interface RpMigration<TModel = unknown> {
   (args: {
-    state: unknown;
+    model: unknown;
     fromVersion: number;
     toVersion: number;
     meta: RpMeta;
     ctx: RpMigrationContext;
-  }): MaybePromise<TState>;
+  }): MaybePromise<TModel>;
 }
 
-export interface RpModule<TState = unknown> {
+export interface RpModule<TModel = unknown> {
   name: string;
   version: number;
-  state: {
+  model: {
     version: number;
-    schema: ZodType<TState, unknown>;
-    defaults: () => MaybePromise<TState>;
-    migrate?: RpMigration<TState>;
+    schema: ZodType<TModel, unknown>;
+    defaults: () => MaybePromise<TModel>;
+    migrate?: RpMigration<TModel>;
   };
-  actions?: Record<string, RpAction<TState, unknown>>;
-  summaries?: Record<string, RpSummary<TState>>;
+  actions?: Record<string, RpAction<TModel, unknown>>;
+  views?: Record<string, RpView<TModel>>;
 }
 
 export type RpModuleDefinition<
-  TStateSchema extends AnyZodSchema,
+  TModelSchema extends AnyZodSchema,
   TActionInputs extends Record<string, AnyZodSchema> = Record<string, never>
 > = {
   name: string;
   version: number;
-  state: {
+  model: {
     version: number;
-    schema: TStateSchema;
-    defaults: () => MaybePromise<SchemaOutput<TStateSchema>>;
-    migrate?: RpMigration<SchemaOutput<TStateSchema>>;
+    schema: TModelSchema;
+    defaults: () => MaybePromise<SchemaOutput<TModelSchema>>;
+    migrate?: RpMigration<SchemaOutput<TModelSchema>>;
   };
-  actions?: RpActionDefinitions<SchemaOutput<TStateSchema>, TActionInputs>;
-  summaries?: Record<string, RpSummary<SchemaOutput<TStateSchema>>>;
+  actions?: RpActionDefinitions<SchemaOutput<TModelSchema>, TActionInputs>;
+  views?: Record<string, RpView<SchemaOutput<TModelSchema>>>;
 };
 
 export interface RpPaths {
   modulePath: string;
-  statePath: string;
+  modelPath: string;
   logPath: string;
   lockPath: string;
 }

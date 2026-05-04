@@ -12,17 +12,17 @@ Roleplay CLI
 
 ## 2. 项目概述
 
-RP CLI 是一个面向 AI Agent 的命令行状态运行时框架。
+RP CLI 是一个面向 AI Agent 的命令行model 运行时框架。
 
-创作者通过 TypeScript + Zod 定义状态 schema、actions 和 summaries。框架负责状态初始化、验证、JSON Patch 应用、持久化、日志记录和 CLI 暴露。
+创作者通过 TypeScript + Zod 定义model schema、actions 和 views。框架负责model 初始化、验证、JSON Patch 应用、持久化、日志记录和 CLI 暴露。
 
 AI Agent 可以通过 CLI：
 
 ```bash
-rp summary
+rp view
 rp action remember '{"text":"Mio likes rainy afternoons."}' --reason "User mentioned this preference."
-rp patch '[{"op":"replace","path":"/mood/label","value":"happy"}]' --reason "Mood changed after the scene."
-rp state | jq '.mood'
+rp update '[{"op":"replace","path":"/mood/label","value":"happy"}]' --reason "Mood changed after the scene."
+rp model | jq '.mood'
 ```
 
 本项目不内置具体游戏类型。地牢、恋爱模拟、模拟人生、经营模拟等都由创作者自行定义 schema 和 actions。
@@ -59,15 +59,15 @@ Agent 通过 action 或 patch 提交修改
 
 ### 4.1 核心目标
 
-1. 支持创作者定义 Zod state schema。
+1. 支持创作者定义 Zod model schema。
 2. 支持创作者定义 actions，作为语义写接口。
-3. 支持创作者定义 summaries，作为只读上下文接口。
+3. 支持创作者定义 views，作为只读上下文接口。
 4. 支持标准 JSON Patch 作为底层唯一写入协议。
 5. 所有写入必须经过 Zod 验证。
-6. 支持 `--reason`，将修改原因写入日志，但不写入 state。
+6. 支持 `--reason`，将修改原因写入日志，但不写入 model。
 7. 提供 CLI 命令供 Agent 或脚本调用。
-8. 遵循 Unix 哲学：原始 state 直接输出，查询过滤交给 jq 等工具。
-9. 支持创作者定义 schema version 和 migrate 函数，用于状态版本升级。
+8. 遵循 Unix 哲学：原始 model 直接输出，查询过滤交给 jq 等工具。
+9. 支持创作者定义 schema version 和 migrate 函数，用于model 版本升级。
 
 ### 4.2 非目标
 
@@ -75,7 +75,7 @@ MVP 不做：
 
 ```text
 不实现 jq-like path 查询
-不实现 state get/set/add/remove
+不实现 model get/set/add/remove
 不内置 RPG / 恋爱模拟 / 模拟人生 schema
 不实现 GUI
 不实现 tools 导出
@@ -94,11 +94,11 @@ MVP 不做：
 创作者编写 `rp.module.ts`，定义：
 
 ```text
-state schema
-state version
+model schema
+model version
 defaults
 actions
-summaries
+views
 migrate
 ```
 
@@ -107,10 +107,10 @@ migrate
 Agent 通过 CLI 调用：
 
 ```text
-summary 读取上下文
+view 读取上下文
 action 执行业务写入
 patch 执行底层写入
-state 获取完整原始状态
+model 获取完整原始状态
 ```
 
 ### 5.3 开发者
@@ -131,10 +131,10 @@ state 获取完整原始状态
 
 ```text
 可以创建 rp.module.ts
-可以定义 state.schema
-可以定义 state.defaults
-rp init 能基于 defaults 初始化状态文件
-rp validate 能使用 Zod 验证状态文件
+可以定义 model.schema
+可以定义 model.defaults
+rp init 能基于 defaults 初始化model 文件
+rp validate 能使用 Zod 验证model 文件
 ```
 
 ---
@@ -155,36 +155,36 @@ rp action remember '{"text":"Mio likes rain."}'
 
 ```text
 action 有 input Zod schema
-action 接收当前 state 和 input
+action 接收当前 model 和 input
 action 返回 patch、可选 reason、可选 message
 框架自动应用 patch
-框架自动验证 patch 后的 state
+框架自动验证 patch 后的 model
 框架将 action reason 写入日志
 框架将 action message 写入 CLI 输出
 ```
 
 ---
 
-### 6.3 创作者定义 summary
+### 6.3 创作者定义 view
 
 **作为创作者，**
-我希望可以定义 summary，
+我希望可以定义 view，
 以便 Agent 能获取精简、结构化的当前上下文。
 
 示例：
 
 ```bash
-rp summary
-rp summary prompt
+rp view
+rp view prompt
 ```
 
 验收标准：
 
 ```text
-summary 可以读取 state
-summary 不允许写 state
-summary 输出 JSON
-summary 输出不强制 Zod 验证
+view 可以读取 model
+view 不允许写 model
+view 输出 JSON
+view 输出不强制 Zod 验证
 ```
 
 ---
@@ -207,11 +207,11 @@ rp action setMood '{"label":"happy","valence":0.7}' \
 ```text
 action input 会被验证
 action 返回 patch、reason、message
-patch 被应用到 state
-修改后的 state 会被 Zod 验证
+patch 被应用到 model
+修改后的 model 会被 Zod 验证
 CLI --reason 进入 log
 action 返回的 reason 进入 log
-reason 不进入 state
+reason 不进入 model
 action 返回的 message 可进入 CLI 输出
 ```
 
@@ -226,15 +226,15 @@ action 返回的 message 可进入 CLI 输出
 示例：
 
 ```bash
-rp patch '[{"op":"replace","path":"/mood/label","value":"calm"}]' \
+rp update '[{"op":"replace","path":"/mood/label","value":"calm"}]' \
   --reason "Scene moved to a quiet moment."
 ```
 
 验收标准：
 
 ```text
-rp patch 使用标准 JSON Patch
-patch path 相对于 author state
+rp update 使用标准 JSON Patch
+patch path 相对于 author model
 patch 不能修改 envelope
 patch 后必须通过 Zod 验证
 验证失败时不落盘
@@ -245,20 +245,20 @@ patch 后必须通过 Zod 验证
 ### 6.6 Agent 读取原始状态
 
 **作为 AI Agent 或脚本，**
-我希望可以获取完整原始 state，
+我希望可以获取完整原始 model，
 以便我可以通过 jq 或其他工具做过滤和转换。
 
 示例：
 
 ```bash
-rp state | jq '.memories[] | select(.pinned == true)'
+rp model | jq '.memories[] | select(.pinned == true)'
 ```
 
 验收标准：
 
 ```text
-rp state 输出 author state
-rp state --raw 输出完整 envelope
+rp model 输出 author model
+rp model --raw 输出完整 envelope
 rp-cli 不实现复杂查询能力
 ```
 
@@ -284,9 +284,9 @@ action 和 patch 写操作都会记录日志
 日志包含 action 返回的 reason
 日志包含 patch
 日志包含操作类型
-日志包含 state hash before / after
+日志包含 model hash before / after
 日志包含 action message
-reason 不进入 state
+reason 不进入 model
 ```
 
 ---
@@ -301,17 +301,17 @@ reason 不进入 state
 
 ```bash
 rp action --list
-rp schema
-rp schema action remember
+rp model --schema
+rp action remember --schema
 ```
 
 验收标准：
 
 ```text
 rp action --list 输出 action 列表
-rp summary --list 输出 summary 列表
-rp schema action <name> 输出 action 描述和 input schema
-rp schema 输出 state JSON Schema
+rp view --list 输出 view 列表
+rp action <name> --schema 输出 action 描述和 input schema
+rp model --schema 输出 model JSON Schema
 schema 转换失败时返回错误
 ```
 
@@ -341,9 +341,9 @@ export default defineModule(...)
 
 ---
 
-## 7.2 状态文件
+## 7.2 model 文件
 
-状态文件使用 envelope 格式：
+model 文件使用 envelope 格式：
 
 ```json
 {
@@ -354,7 +354,7 @@ export default defineModule(...)
     "createdAt": "2026-05-03T12:00:00.000Z",
     "updatedAt": "2026-05-03T12:00:00.000Z"
   },
-  "state": {}
+  "model": {}
 }
 ```
 
@@ -362,10 +362,10 @@ export default defineModule(...)
 
 ```text
 rp 由框架维护
-state 由创作者 schema 定义
-patch 和 action 只能修改 state
-rp.schemaVersion 来自创作者模块中的 state.version
-state.version 表示创作者 schema 的版本，不属于 author state
+model 由创作者 schema 定义
+patch 和 action 只能修改 model
+rp.schemaVersion 来自创作者模块中的 model.version
+model.version 表示创作者 schema 的版本，不属于 author model
 非 migrate 命令遇到旧 schemaVersion 时返回 MIGRATION_REQUIRED
 非 migrate 命令遇到更高 schemaVersion 时返回 MIGRATION_FAILED
 ```
@@ -388,8 +388,8 @@ rp init --force
 调用 defaults
 验证 defaults
 创建 envelope
-将 rp.schemaVersion 设置为 module.state.version
-写入状态文件
+将 rp.schemaVersion 设置为 module.model.version
+写入model 文件
 ```
 
 ---
@@ -406,8 +406,8 @@ rp validate
 
 ```text
 验证 envelope
-检查 rp.schemaVersion 与 module.state.version
-验证 author state
+检查 rp.schemaVersion 与 module.model.version
+验证 author model
 返回验证结果
 ```
 
@@ -426,12 +426,12 @@ rp migrate --dry-run
 
 ```text
 加载模块
-读取状态文件
-当 rp.schemaVersion 低于 module.state.version 时调用 module.state.migrate
-migrate 由创作者实现旧 state 到新 state 的转换
-验证迁移后的 state
+读取model 文件
+当 rp.schemaVersion 低于 module.model.version 时调用 module.model.migrate
+migrate 由创作者实现旧 model 到新 model 的转换
+验证迁移后的 model
 更新 envelope 中的 schemaVersion
-写入状态文件
+写入model 文件
 记录日志
 ```
 
@@ -442,15 +442,15 @@ migrate 由创作者实现旧 state 到新 state 的转换
 命令：
 
 ```bash
-rp state
-rp state --raw
+rp model
+rp model --raw
 ```
 
 功能：
 
 ```text
-rp state 输出 author state
-rp state --raw 输出完整 envelope
+rp model 输出 author model
+rp model --raw 输出完整 envelope
 ```
 
 ---
@@ -460,8 +460,8 @@ rp state --raw 输出完整 envelope
 命令：
 
 ```bash
-rp patch '<json-patch>' --reason '<reason>'
-rp patch --file patch.json --reason '<reason>'
+rp update '<json-patch>' --reason '<reason>'
+rp update --file patch.json --reason '<reason>'
 ```
 
 功能：
@@ -469,9 +469,9 @@ rp patch --file patch.json --reason '<reason>'
 ```text
 解析 JSON Patch
 支持 fast-json-patch 提供的完整标准 JSON Patch 操作
-应用到 state
-验证 patch 后的 state
-写入状态文件
+应用到 model
+验证 patch 后的 model
+写入model 文件
 记录日志
 ```
 
@@ -494,52 +494,52 @@ rp action <name> --file input.json --reason '<reason>'
 执行 action
 action 返回 patch、可选 reason、可选 message
 框架应用 patch
-验证新 state
-写入状态文件
+验证新 model
+写入model 文件
 记录日志
 返回状态修改后的 result 和可选 message
 ```
 
 ---
 
-## 7.9 调用 summary
+## 7.9 调用 view
 
 命令：
 
 ```bash
-rp summary
-rp summary <name>
+rp view
+rp view <name>
 ```
 
 功能：
 
 ```text
-查找 summary
+查找 view
 验证 envelope
-检查 rp.schemaVersion 与 module.state.version
-验证当前 state
-调用 summary
-输出 summary JSON
-不写 state
+检查 rp.schemaVersion 与 module.model.version
+验证当前 model
+调用 view
+输出 view JSON
+不写 model
 只读是作者模块契约，MVP 不强制 deep freeze
 ```
 
 ---
 
-## 7.10 查看 action 和 summary
+## 7.10 查看 action 和 view
 
 命令：
 
 ```bash
 rp action --list
-rp summary --list
+rp view --list
 ```
 
 功能：
 
 ```text
 列出 action
-列出 summary
+列出 view
 ```
 
 ---
@@ -549,15 +549,15 @@ rp summary --list
 命令：
 
 ```bash
-rp schema
-rp schema state
-rp schema action <name>
+rp model --schema
+rp model --schema
+rp action <name> --schema
 ```
 
 功能：
 
 ```text
-输出 state schema 信息
+输出 model schema 信息
 输出 action input schema 信息
 输出格式为 JSON Schema
 转换失败返回 SCHEMA_EXPORT_FAILED
@@ -590,20 +590,20 @@ rp log --limit 20
 所有写操作必须：
 
 ```text
-先验证当前 state
+先验证当前 model
 应用 patch
-再验证新 state
+再验证新 model
 验证失败不落盘
 ```
 
 ### 8.2 原子写入
 
-写状态文件时必须使用原子写入策略：
+写model 文件时必须使用原子写入策略：
 
 ```text
 写临时文件
 rename 替换
-避免状态文件损坏
+避免model 文件损坏
 ```
 
 ### 8.3 文件锁
@@ -617,16 +617,16 @@ action
 migrate
 ```
 
-锁应覆盖状态文件写入和日志追加，以避免多个 Agent 并发写入同一个 state file。
+锁应覆盖model 文件写入和日志追加，以避免多个 Agent 并发写入同一个 model file。
 
 ### 8.4 写入与日志事务
 
-MVP 不要求状态文件写入和日志追加组成原子事务。
+MVP 不要求model 文件写入和日志追加组成原子事务。
 
 ```text
-状态文件写入必须原子化
+model 文件写入必须原子化
 日志追加不要求与状态写入事务化
-日志失败应返回明确错误，但不要求回滚状态文件
+日志失败应返回明确错误，但不要求回滚model 文件
 ```
 
 ### 8.5 JSON 输出
@@ -645,7 +645,7 @@ MVP 不要求状态文件写入和日志追加组成原子事务。
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "state failed validation",
+    "message": "model failed validation",
     "details": {}
   }
 }
@@ -671,9 +671,9 @@ RP CLI 应遵循 Unix 哲学：
 ```text
 MODULE_NOT_FOUND
 MODULE_INVALID
-STATE_NOT_FOUND
-STATE_INVALID_JSON
-STATE_ENVELOPE_INVALID
+MODEL_NOT_FOUND
+MODEL_INVALID_JSON
+MODEL_ENVELOPE_INVALID
 VALIDATION_ERROR
 PATCH_INVALID
 PATCH_FAILED
@@ -681,14 +681,14 @@ ACTION_NOT_FOUND
 ACTION_INPUT_INVALID
 ACTION_RETURN_INVALID
 ACTION_RUNTIME_ERROR
-SUMMARY_NOT_FOUND
-SUMMARY_RUNTIME_ERROR
+VIEW_NOT_FOUND
+VIEW_RUNTIME_ERROR
 MIGRATION_REQUIRED
 MIGRATION_FAILED
 SCHEMA_EXPORT_FAILED
 WRITE_FAILED
 LOG_WRITE_FAILED
-STATE_LOCKED
+MODEL_LOCKED
 ```
 
 失败示例：
@@ -737,15 +737,15 @@ fs-extra
 ```text
 defineModule
 模块加载
-state envelope
+model envelope
 rp init
 rp validate
 rp migrate
-rp state
-rp patch
+rp model
+rp update
 rp action
-rp summary
-rp schema
+rp view
+rp model --schema
 rp log
 Zod 验证
 JSON Patch 应用
@@ -763,7 +763,7 @@ migrate
 ```text
 rp tools
 rp view
-rp state get/set/add/remove
+rp model get/set/add/remove
 jq-like path
 GUI
 远程模块加载
@@ -784,26 +784,26 @@ examples/life-sim/rp.module.ts
 包含：
 
 ```text
-state schema
+model schema
 defaults
 remember action
 setMood action
-default summary
-prompt summary
+default view
+prompt view
 ```
 
 示例调用：
 
 ```bash
-rp --module examples/life-sim/rp.module.ts --state mio.json init
+rp --module examples/life-sim/rp.module.ts --model mio.json init
 
-rp --module examples/life-sim/rp.module.ts --state mio.json \
+rp --module examples/life-sim/rp.module.ts --model mio.json \
   action remember '{"text":"Mio likes rain.","pinned":true}' \
   --reason "User established this preference."
 
-rp --module examples/life-sim/rp.module.ts --state mio.json summary
+rp --module examples/life-sim/rp.module.ts --model mio.json view
 
-rp --module examples/life-sim/rp.module.ts --state mio.json state \
+rp --module examples/life-sim/rp.module.ts --model mio.json model \
   | jq '.memories'
 ```
 
@@ -815,17 +815,17 @@ rp --module examples/life-sim/rp.module.ts --state mio.json state \
 
 ```text
 可以创建并加载 rp.module.ts
-可以初始化状态文件
-可以验证状态文件
-可以迁移旧 schemaVersion 的状态文件
-可以输出 author state
+可以初始化model 文件
+可以验证model 文件
+可以迁移旧 schemaVersion 的model 文件
+可以输出 author model
 可以应用标准 JSON Patch
 patch 后必须经过 Zod 验证
 可以执行 action
 action 返回 patch 并由框架应用
-summary 只读
-reason 写入 log 但不写入 state
-action/summary/schema 可被查看
+view 只读
+reason 写入 log 但不写入 model
+action/view/schema 可被查看
 日志可读取
 非法输入返回统一错误 JSON
 测试覆盖核心流程
@@ -837,25 +837,25 @@ action/summary/schema 可被查看
 
 RP CLI 的最终定位是：
 
-> 一个遵循 Unix 哲学的 Zod + JSON Patch 命令行状态运行时框架。
+> 一个遵循 Unix 哲学的 Zod + JSON Patch 命令行model 运行时框架。
 
 它的核心读写模型是：
 
 ```text
 Read:
-  rp summary [name]
-  rp state | jq ...
+  rp view [name]
+  rp model | jq ...
 
 Write:
   rp action <name> <json-input> --reason "..."
-  rp patch <json-patch> --reason "..."
+  rp update <json-patch> --reason "..."
   rp migrate
 
 Safety:
   rp validate
   rp migrate for schemaVersion upgrades
   Zod validation
-  JSON Patch only targets author state
+  JSON Patch only targets author model
   reason only enters log
 ```
 

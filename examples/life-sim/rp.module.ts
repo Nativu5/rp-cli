@@ -10,9 +10,9 @@ const MemorySchema = z.object({
   createdAt: z.string()
 });
 
-// The state schema is the creator's world model: character canon, current scene signals,
-// relationship state, and long-term memory.
-const StateSchema = z.object({
+// The model schema is the creator's world model: character canon, current scene signals,
+// relationships, and long-term memory.
+const ModelSchema = z.object({
   profile: z
     .object({
       name: z.string().optional(),
@@ -48,9 +48,9 @@ const StateSchema = z.object({
 export default defineModule({
   name: "life-sim",
   version: 1,
-  state: {
+  model: {
     version: 1,
-    schema: StateSchema,
+    schema: ModelSchema,
     // Defaults describe a new save file before the story has accumulated canon.
     defaults: () => ({
       profile: {},
@@ -59,7 +59,7 @@ export default defineModule({
       memories: []
     }),
     // Migration keeps older save files usable when the creator evolves the schema.
-    migrate: ({ state }) => StateSchema.parse(state)
+    migrate: ({ model }) => ModelSchema.parse(model)
   },
   actions: {
     remember: {
@@ -112,22 +112,22 @@ export default defineModule({
       }
     }
   },
-  summaries: {
-    default({ state }) {
-      // Summaries are read-only views for agents; they do not need to mirror raw state.
+  views: {
+    default({ model }) {
+      // Views are read-only projections for agents; they do not need to mirror raw model.
       return {
-        profile: state.profile,
-        mood: state.mood,
-        relationshipCount: Object.keys(state.relationships).length,
-        pinnedMemories: state.memories.filter((memory) => memory.pinned)
+        profile: model.profile,
+        mood: model.mood,
+        relationshipCount: Object.keys(model.relationships).length,
+        pinnedMemories: model.memories.filter((memory) => memory.pinned)
       };
     },
-    prompt({ state }) {
-      // The prompt summary shapes state into compact context for the next generated scene.
+    prompt({ model }) {
+      // The prompt view shapes model data into compact context for the next generated scene.
       return {
-        character: state.profile,
-        currentMood: state.mood,
-        importantMemories: state.memories
+        character: model.profile,
+        currentMood: model.mood,
+        importantMemories: model.memories
           .filter((memory) => memory.pinned)
           .map((memory) => memory.text)
       };

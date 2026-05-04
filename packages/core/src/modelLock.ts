@@ -11,13 +11,13 @@ const lockfile = require("proper-lockfile") as typeof ProperLockfile;
 export const DEFAULT_LOCK_STALE_MS = 5_000;
 export const DEFAULT_LOCK_UPDATE_MS = 1_000;
 
-export async function withStateLock<T>(paths: RpPaths, run: () => Promise<T>): Promise<T> {
+export async function withModelLock<T>(paths: RpPaths, run: () => Promise<T>): Promise<T> {
   await mkdir(path.dirname(paths.lockPath), { recursive: true });
 
   let release: (() => Promise<void>) | undefined;
 
   try {
-    release = await lockfile.lock(paths.statePath, {
+    release = await lockfile.lock(paths.modelPath, {
       lockfilePath: paths.lockPath,
       realpath: false,
       stale: DEFAULT_LOCK_STALE_MS,
@@ -30,7 +30,7 @@ export async function withStateLock<T>(paths: RpPaths, run: () => Promise<T>): P
       }
     });
   } catch (error) {
-    throw stateLockedError(paths.lockPath, "failed to acquire state lock", error);
+    throw modelLockedError(paths.lockPath, "failed to acquire model lock", error);
   }
 
   let result: T;
@@ -38,16 +38,16 @@ export async function withStateLock<T>(paths: RpPaths, run: () => Promise<T>): P
   try {
     result = await run();
   } catch (error) {
-    await releaseStateLockIgnoringErrors(release);
+    await releaseModelLockIgnoringErrors(release);
     throw error;
   }
 
-  await releaseStateLock(paths.lockPath, release);
+  await releaseModelLock(paths.lockPath, release);
   return result;
 }
 
-function stateLockedError(lockPath: string, message: string, error: unknown): RpError {
-  return new RpError("STATE_LOCKED", `${message}: ${lockPath}`, {
+function modelLockedError(lockPath: string, message: string, error: unknown): RpError {
+  return new RpError("MODEL_LOCKED", `${message}: ${lockPath}`, {
     cause: error instanceof Error ? error.message : String(error),
     code: isNodeError(error) ? error.code : undefined
   });
@@ -57,15 +57,15 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && "code" in error;
 }
 
-async function releaseStateLock(lockPath: string, release: () => Promise<void>): Promise<void> {
+async function releaseModelLock(lockPath: string, release: () => Promise<void>): Promise<void> {
   try {
     await release();
   } catch (error) {
-    throw stateLockedError(lockPath, "failed to release state lock", error);
+    throw modelLockedError(lockPath, "failed to release model lock", error);
   }
 }
 
-async function releaseStateLockIgnoringErrors(release: () => Promise<void>): Promise<void> {
+async function releaseModelLockIgnoringErrors(release: () => Promise<void>): Promise<void> {
   try {
     await release();
   } catch {

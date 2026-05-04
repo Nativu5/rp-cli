@@ -1,5 +1,5 @@
-export function cloneStateForUserCode<TState>(state: TState): Readonly<TState> {
-  return deepFreeze(structuredClone(state));
+export function cloneModelForUserCode<TModel>(model: TModel): Readonly<TModel> {
+  return deepFreeze(structuredClone(model));
 }
 
 function deepFreeze<TValue>(value: TValue): Readonly<TValue> {

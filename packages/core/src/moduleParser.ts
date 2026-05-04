@@ -28,33 +28,41 @@ function validateModuleShape(value: unknown): string[] {
     issues.push("version must be a non-negative integer");
   }
 
-  if (!isRecord(value.state)) {
-    issues.push("state must be an object");
+  if (Object.prototype.hasOwnProperty.call(value, "state")) {
+    issues.push("state has been renamed to model");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(value, "summaries")) {
+    issues.push("summaries has been renamed to views");
+  }
+
+  if (!isRecord(value.model)) {
+    issues.push("model must be an object");
     return issues;
   }
 
-  if (!isVersion(value.state.version)) {
-    issues.push("state.version must be a non-negative integer");
+  if (!isVersion(value.model.version)) {
+    issues.push("model.version must be a non-negative integer");
   }
 
-  if (!isZodType(value.state.schema)) {
-    issues.push("state.schema must be a Zod schema");
+  if (!isZodType(value.model.schema)) {
+    issues.push("model.schema must be a Zod schema");
   }
 
-  if (typeof value.state.defaults !== "function") {
-    issues.push("state.defaults must be a function");
+  if (typeof value.model.defaults !== "function") {
+    issues.push("model.defaults must be a function");
   }
 
-  if (value.state.migrate !== undefined && typeof value.state.migrate !== "function") {
-    issues.push("state.migrate must be a function when provided");
+  if (value.model.migrate !== undefined && typeof value.model.migrate !== "function") {
+    issues.push("model.migrate must be a function when provided");
   }
 
   if (value.actions !== undefined) {
     validateActions(value.actions, issues);
   }
 
-  if (value.summaries !== undefined) {
-    validateSummaries(value.summaries, issues);
+  if (value.views !== undefined) {
+    validateViews(value.views, issues);
   }
 
   return issues;
@@ -86,28 +94,28 @@ function validateActions(value: unknown, issues: string[]): void {
   }
 }
 
-function validateSummaries(value: unknown, issues: string[]): void {
+function validateViews(value: unknown, issues: string[]): void {
   if (!isRecord(value)) {
-    issues.push("summaries must be an object when provided");
+    issues.push("views must be an object when provided");
     return;
   }
 
-  for (const [name, summary] of Object.entries(value)) {
-    if (typeof summary === "function") {
+  for (const [name, view] of Object.entries(value)) {
+    if (typeof view === "function") {
       continue;
     }
 
-    if (!isRecord(summary)) {
-      issues.push(`summaries.${name} must be a function or object`);
+    if (!isRecord(view)) {
+      issues.push(`views.${name} must be a function or object`);
       continue;
     }
 
-    if (summary.description !== undefined && !isNonEmptyString(summary.description)) {
-      issues.push(`summaries.${name}.description must be a non-empty string`);
+    if (view.description !== undefined && !isNonEmptyString(view.description)) {
+      issues.push(`views.${name}.description must be a non-empty string`);
     }
 
-    if (typeof summary.run !== "function") {
-      issues.push(`summaries.${name}.run must be a function`);
+    if (typeof view.run !== "function") {
+      issues.push(`views.${name}.run must be a function`);
     }
   }
 }

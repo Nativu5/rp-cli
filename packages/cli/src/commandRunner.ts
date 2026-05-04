@@ -4,7 +4,7 @@ import { toErrorShape, writeJson } from "./output.js";
 
 export interface GlobalCliOptions {
   module?: string;
-  state?: string;
+  model?: string;
   pretty?: boolean;
   dryRun?: boolean;
   reason?: string;
@@ -25,7 +25,7 @@ export async function runCommand(
   const context: CommandContext = {
     paths: resolveRpPaths({
       modulePath: options.module,
-      statePath: options.state
+      modelPath: options.model
     }),
     pretty: Boolean(options.pretty),
     dryRun: Boolean(options.dryRun),
@@ -51,7 +51,7 @@ function exitCodeForError(error: unknown): number {
     return 3;
   }
 
-  if (isStateFileError(code)) {
+  if (isModelFileError(code)) {
     return 4;
   }
 
@@ -67,7 +67,7 @@ function exitCodeForError(error: unknown): number {
     return 7;
   }
 
-  if (code === "WRITE_FAILED" || code === "LOG_WRITE_FAILED" || code === "STATE_LOCKED") {
+  if (code === "WRITE_FAILED" || code === "LOG_WRITE_FAILED" || code === "MODEL_LOCKED") {
     return 8;
   }
 
@@ -76,12 +76,12 @@ function exitCodeForError(error: unknown): number {
 
 function isModuleError(code: RpErrorCode): boolean {
   return (
-    code === "MODULE_NOT_FOUND" || code === "MODULE_INVALID" || code === "MODULE_STATE_MISMATCH"
+    code === "MODULE_NOT_FOUND" || code === "MODULE_INVALID" || code === "MODULE_MODEL_MISMATCH"
   );
 }
 
-function isStateFileError(code: RpErrorCode): boolean {
+function isModelFileError(code: RpErrorCode): boolean {
   return (
-    code === "STATE_NOT_FOUND" || code === "STATE_INVALID_JSON" || code === "STATE_ENVELOPE_INVALID"
+    code === "MODEL_NOT_FOUND" || code === "MODEL_INVALID_JSON" || code === "MODEL_ENVELOPE_INVALID"
   );
 }

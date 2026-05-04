@@ -3,14 +3,14 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { RpError } from "./errors.js";
 import { parseEnvelope } from "./validation.js";
-import type { RpModule, RpPaths, RpStateFile } from "./types.js";
+import type { RpModule, RpPaths, RpModelFile } from "./types.js";
 
 export const DEFAULT_MODULE_PATH = "./rp.module.ts";
-export const DEFAULT_STATE_PATH = "./rp.state.json";
+export const DEFAULT_MODEL_PATH = "./rp.model.json";
 
 export function resolveRpPaths(options: {
   modulePath?: string;
-  statePath?: string;
+  modelPath?: string;
   cwd?: string;
 }): RpPaths {
   const cwd = options.cwd ?? process.cwd();
@@ -18,16 +18,16 @@ export function resolveRpPaths(options: {
     cwd,
     options.modulePath ?? process.env.RP_MODULE ?? DEFAULT_MODULE_PATH
   );
-  const statePath = path.resolve(
+  const modelPath = path.resolve(
     cwd,
-    options.statePath ?? process.env.RP_STATE ?? DEFAULT_STATE_PATH
+    options.modelPath ?? process.env.RP_MODEL ?? DEFAULT_MODEL_PATH
   );
 
   return {
     modulePath,
-    statePath,
-    logPath: `${statePath}.log.jsonl`,
-    lockPath: `${statePath}.lock`
+    modelPath,
+    logPath: `${modelPath}.log.jsonl`,
+    lockPath: `${modelPath}.lock`
   };
 }
 
@@ -51,10 +51,10 @@ export async function readJsonFile(filePath: string): Promise<unknown> {
     content = await readFile(filePath, "utf8");
   } catch (error) {
     if (isNodeError(error) && error.code === "ENOENT") {
-      throw new RpError("STATE_NOT_FOUND", `state file not found: ${filePath}`);
+      throw new RpError("MODEL_NOT_FOUND", `model file not found: ${filePath}`);
     }
 
-    throw new RpError("STATE_NOT_FOUND", `failed to read state file: ${filePath}`, {
+    throw new RpError("MODEL_NOT_FOUND", `failed to read model file: ${filePath}`, {
       cause: error instanceof Error ? error.message : String(error)
     });
   }
@@ -62,48 +62,48 @@ export async function readJsonFile(filePath: string): Promise<unknown> {
   try {
     return JSON.parse(content);
   } catch (error) {
-    throw new RpError("STATE_INVALID_JSON", `state file is not valid JSON: ${filePath}`, {
+    throw new RpError("MODEL_INVALID_JSON", `model file is not valid JSON: ${filePath}`, {
       cause: error instanceof Error ? error.message : String(error)
     });
   }
 }
 
-export async function readStateFile(filePath: string): Promise<RpStateFile> {
+export async function readModelFile(filePath: string): Promise<RpModelFile> {
   return parseEnvelope(await readJsonFile(filePath));
 }
 
-export function createStateEnvelope<TState>(
-  module: RpModule<TState>,
-  state: TState,
+export function createModelEnvelope<TModel>(
+  module: RpModule<TModel>,
+  model: TModel,
   timestamp = new Date().toISOString()
-): RpStateFile<TState> {
+): RpModelFile<TModel> {
   return {
     rp: {
       module: module.name,
       moduleVersion: module.version,
-      schemaVersion: module.state.version,
+      schemaVersion: module.model.version,
       createdAt: timestamp,
       updatedAt: timestamp
     },
-    state
+    model
   };
 }
 
-export function updateStateEnvelope<TState>(
-  envelope: RpStateFile,
+export function updateModelEnvelope<TModel>(
+  envelope: RpModelFile,
   module: RpModule<unknown>,
-  state: TState,
+  model: TModel,
   timestamp = new Date().toISOString()
-): RpStateFile<TState> {
+): RpModelFile<TModel> {
   return {
     rp: {
       ...envelope.rp,
       module: module.name,
       moduleVersion: module.version,
-      schemaVersion: module.state.version,
+      schemaVersion: module.model.version,
       updatedAt: timestamp
     },
-    state
+    model
   };
 }
 
@@ -126,7 +126,7 @@ export async function writeJsonFileAtomic(
   } catch (error) {
     await rm(temporaryPath, { force: true });
 
-    throw new RpError("WRITE_FAILED", `failed to write state file: ${filePath}`, {
+    throw new RpError("WRITE_FAILED", `failed to write model file: ${filePath}`, {
       cause: error instanceof Error ? error.message : String(error)
     });
   }

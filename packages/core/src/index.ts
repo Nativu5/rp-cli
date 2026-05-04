@@ -15,8 +15,8 @@ export type {
   RpModule,
   RpModuleDefinition,
   RpRuntimeContext,
-  RpSummary,
-  RpSummaryFunction,
-  RpSummaryObject,
+  RpView,
+  RpViewFunction,
+  RpViewObject,
   SchemaOutput
 } from "./types.js";

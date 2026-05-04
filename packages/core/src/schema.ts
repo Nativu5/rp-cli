@@ -2,8 +2,8 @@ import { toJSONSchema } from "zod";
 import { RpError } from "./errors.js";
 import type { AnyZodSchema, RpAction, RpModule } from "./types.js";
 
-export function exportStateSchema(module: RpModule): unknown {
-  return exportJsonSchema(module.state.schema, "state schema");
+export function exportModelSchema(module: RpModule): unknown {
+  return exportJsonSchema(module.model.schema, "model schema");
 }
 
 export function exportActionInputSchema(action: RpAction): unknown {

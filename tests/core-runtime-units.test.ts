@@ -2,12 +2,12 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { applyJsonPatch, findSummary, readJsonLogEntries, runSummary } from "@rp-cli/core/internal";
+import { applyJsonPatch, findView, readJsonLogEntries, runView } from "@rp-cli/core/internal";
 
 describe("core runtime units", () => {
-  it("selects default, brief, then the first summary when no name is requested", () => {
+  it("selects default, brief, then the first view when no name is requested", () => {
     expect(
-      findSummary({
+      findView({
         first: () => "first",
         default: () => "default",
         brief: () => "brief"
@@ -15,26 +15,26 @@ describe("core runtime units", () => {
     ).toBe("default");
 
     expect(
-      findSummary({
+      findView({
         first: () => "first",
         brief: () => "brief"
       }).name
     ).toBe("brief");
 
     expect(
-      findSummary({
+      findView({
         first: () => "first"
       }).name
     ).toBe("first");
   });
 
-  it("wraps summary runtime failures", async () => {
+  it("wraps view runtime failures", async () => {
     await expect(
-      runSummary({
-        summary: () => {
+      runView({
+        view: () => {
           throw new Error("boom");
         },
-        state: {},
+        model: {},
         meta: {
           module: "unit",
           moduleVersion: 1,
@@ -44,27 +44,27 @@ describe("core runtime units", () => {
         }
       })
     ).rejects.toMatchObject({
-      code: "SUMMARY_RUNTIME_ERROR"
+      code: "VIEW_RUNTIME_ERROR"
     });
   });
 
-  it("applies JSON Patch without mutating the original state object", () => {
-    const state = {
+  it("applies JSON Patch without mutating the original model object", () => {
+    const model = {
       mood: {
         label: "calm"
       }
     };
 
-    const nextState = applyJsonPatch(state, [
+    const nextModel = applyJsonPatch(model, [
       { op: "replace", path: "/mood/label", value: "happy" }
     ]);
 
-    expect(nextState).toEqual({
+    expect(nextModel).toEqual({
       mood: {
         label: "happy"
       }
     });
-    expect(state).toEqual({
+    expect(model).toEqual({
       mood: {
         label: "calm"
       }
@@ -74,32 +74,32 @@ describe("core runtime units", () => {
   it("reads JSONL log entries and treats a missing log file as empty", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "rp-cli-core-log-"));
     await mkdir(cwd, { recursive: true });
-    const logPath = path.join(cwd, "rp.state.json.log.jsonl");
+    const logPath = path.join(cwd, "rp.model.json.log.jsonl");
 
     expect(await readJsonLogEntries(logPath)).toEqual([]);
 
     await writeFile(
       logPath,
       [
-        JSON.stringify({ type: "patch", index: 1 }),
+        JSON.stringify({ type: "update", index: 1 }),
         JSON.stringify({ type: "action", index: 2 }),
         ""
       ].join("\n")
     );
 
     expect(await readJsonLogEntries(logPath)).toEqual([
-      { type: "patch", index: 1 },
+      { type: "update", index: 1 },
       { type: "action", index: 2 }
     ]);
   });
 
   it("rejects invalid JSONL log content", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "rp-cli-core-log-"));
-    const logPath = path.join(cwd, "rp.state.json.log.jsonl");
-    await writeFile(logPath, '{"type":"patch"}\nnot-json\n');
+    const logPath = path.join(cwd, "rp.model.json.log.jsonl");
+    await writeFile(logPath, '{"type":"update"}\nnot-json\n');
 
     await expect(readJsonLogEntries(logPath)).rejects.toMatchObject({
-      code: "STATE_INVALID_JSON"
+      code: "MODEL_INVALID_JSON"
     });
   });
 });

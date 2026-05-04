@@ -18,11 +18,11 @@ export function compareSchemaVersions(
   return "current";
 }
 
-export function requireMigration<TState>(
-  migrate: RpMigration<TState> | undefined,
+export function requireMigration<TModel>(
+  migrate: RpMigration<TModel> | undefined,
   fromVersion: number,
   toVersion: number
-): RpMigration<TState> {
+): RpMigration<TModel> {
   const comparison = compareSchemaVersions(fromVersion, toVersion);
 
   if (comparison === "current") {
@@ -33,14 +33,14 @@ export function requireMigration<TState>(
   }
 
   if (comparison === "newer") {
-    throw new RpError("MIGRATION_FAILED", "cannot migrate from a newer state", {
+    throw new RpError("MIGRATION_FAILED", "cannot migrate from a newer model", {
       fromVersion,
       toVersion
     });
   }
 
   if (!migrate) {
-    throw new RpError("MIGRATION_REQUIRED", "module does not define state.migrate", {
+    throw new RpError("MIGRATION_REQUIRED", "module does not define model.migrate", {
       fromVersion,
       toVersion
     });
@@ -49,19 +49,19 @@ export function requireMigration<TState>(
   return migrate;
 }
 
-export async function runMigration<TState>(args: {
-  migrate: RpMigration<TState> | undefined;
-  state: unknown;
+export async function runMigration<TModel>(args: {
+  migrate: RpMigration<TModel> | undefined;
+  model: unknown;
   fromVersion: number;
   toVersion: number;
   meta: RpMeta;
   ctx: RpRuntimeContext;
-}): Promise<TState> {
+}): Promise<TModel> {
   const migrate = requireMigration(args.migrate, args.fromVersion, args.toVersion);
 
   try {
     return await migrate({
-      state: args.state,
+      model: args.model,
       fromVersion: args.fromVersion,
       toVersion: args.toVersion,
       meta: args.meta,

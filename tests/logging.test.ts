@@ -12,18 +12,18 @@ afterEach(() => {
 });
 
 describe("operation logging", () => {
-  it("appends patch logs and reads them with rp log", async () => {
+  it("appends update logs and reads them with rp log", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
     const patchResult = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "--reason",
-      "manual patch",
-      "patch",
+      "manual update",
+      "update",
       '[{"op":"replace","path":"/value","value":"patched"}]'
     ]);
 
@@ -32,19 +32,19 @@ describe("operation logging", () => {
     const logResult = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "log"
     ]);
 
     expect(logResult.exitCode).toBeUndefined();
     expect(logResult.json).toHaveLength(1);
     expect(logResult.json[0]).toMatchObject({
-      type: "patch",
-      reason: "manual patch",
+      type: "update",
+      reason: "manual update",
       patch: [{ op: "replace", path: "/value", value: "patched" }],
-      stateHashBefore: expect.stringMatching(/^sha256:/),
-      stateHashAfter: expect.stringMatching(/^sha256:/)
+      modelHashBefore: expect.stringMatching(/^sha256:/),
+      modelHashAfter: expect.stringMatching(/^sha256:/)
     });
     expect(logResult.json[0].id).toEqual(expect.stringMatching(/^log_/));
     expect(logResult.json[0].time).toEqual(expect.any(String));
@@ -57,8 +57,8 @@ describe("operation logging", () => {
     await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "--reason",
       "semantic update",
       "action",
@@ -69,8 +69,8 @@ describe("operation logging", () => {
     const logResult = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "log"
     ]);
 
@@ -84,8 +84,8 @@ describe("operation logging", () => {
       message: "Value updated.",
       input: { value: "from-action" },
       patch: [{ op: "replace", path: "/value", value: "from-action" }],
-      stateHashBefore: expect.stringMatching(/^sha256:/),
-      stateHashAfter: expect.stringMatching(/^sha256:/)
+      modelHashBefore: expect.stringMatching(/^sha256:/),
+      modelHashAfter: expect.stringMatching(/^sha256:/)
     });
   });
 
@@ -96,16 +96,16 @@ describe("operation logging", () => {
     await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "patch",
+      "--model",
+      workspace.modelPath,
+      "update",
       '[{"op":"replace","path":"/value","value":"first"}]'
     ]);
     await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "setValue",
       '{"value":"second"}'
@@ -114,8 +114,8 @@ describe("operation logging", () => {
     const logResult = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "log",
       "--limit",
       "1"
@@ -136,18 +136,18 @@ describe("operation logging", () => {
     await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "--dry-run",
-      "patch",
+      "update",
       '[{"op":"replace","path":"/value","value":"preview"}]'
     ]);
 
     const logResult = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "log"
     ]);
 
@@ -155,17 +155,17 @@ describe("operation logging", () => {
     expect(logResult.json).toEqual([]);
   });
 
-  it("returns LOG_WRITE_FAILED without rolling back the state write", async () => {
+  it("returns LOG_WRITE_FAILED without rolling back the model write", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
-    await mkdir(`${workspace.statePath}.log.jsonl`);
+    await mkdir(`${workspace.modelPath}.log.jsonl`);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "patch",
+      "--model",
+      workspace.modelPath,
+      "update",
       '[{"op":"replace","path":"/value","value":"written-before-log-failure"}]'
     ]);
 
@@ -175,7 +175,7 @@ describe("operation logging", () => {
         code: "LOG_WRITE_FAILED"
       }
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "written-before-log-failure",
       count: 1
     });
@@ -185,28 +185,28 @@ describe("operation logging", () => {
 async function createWorkspace(): Promise<{
   cwd: string;
   modulePath: string;
-  statePath: string;
+  modelPath: string;
 }> {
   const cwd = await mkdtemp(path.join(tmpdir(), "rp-cli-logging-"));
   await mkdir(cwd, { recursive: true });
   const modulePath = path.join(cwd, "rp.module.ts");
-  const statePath = path.join(cwd, "rp.state.json");
+  const modelPath = path.join(cwd, "rp.model.json");
 
   await writeFile(
     modulePath,
     [
       'import { defineModule } from "@rp-cli/core";',
       'import { z } from "zod";',
-      "const StateSchema = z.object({",
+      "const ModelSchema = z.object({",
       "  value: z.string(),",
       "  count: z.number()",
       "});",
       "export default defineModule({",
       '  name: "logging-phase",',
       "  version: 1,",
-      "  state: {",
+      "  model: {",
       "    version: 1,",
-      "    schema: StateSchema,",
+      "    schema: ModelSchema,",
       '    defaults: () => ({ value: "ready", count: 1 })',
       "  },",
       "  actions: {",
@@ -226,25 +226,25 @@ async function createWorkspace(): Promise<{
     ].join("\n")
   );
 
-  return { cwd, modulePath, statePath };
+  return { cwd, modulePath, modelPath };
 }
 
-async function initWorkspace(workspace: { modulePath: string; statePath: string }): Promise<void> {
+async function initWorkspace(workspace: { modulePath: string; modelPath: string }): Promise<void> {
   const result = await runCli([
     "--module",
     workspace.modulePath,
-    "--state",
-    workspace.statePath,
+    "--model",
+    workspace.modelPath,
     "init"
   ]);
 
   expect(result.exitCode).toBeUndefined();
 }
 
-async function expectState(statePath: string, state: unknown): Promise<void> {
-  const envelope = JSON.parse(await readFile(statePath, "utf8"));
+async function expectModel(modelPath: string, model: unknown): Promise<void> {
+  const envelope = JSON.parse(await readFile(modelPath, "utf8"));
 
-  expect(envelope.state).toEqual(state);
+  expect(envelope.model).toEqual(model);
 }
 
 async function runCli(args: string[]): Promise<{

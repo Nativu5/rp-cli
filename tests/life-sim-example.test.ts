@@ -13,19 +13,19 @@ afterEach(() => {
 });
 
 describe("life-sim example", () => {
-  it("runs the documented state lifecycle and write workflow", async () => {
+  it("runs the documented model lifecycle and write workflow", async () => {
     const workspace = await createWorkspace();
 
-    const initResult = await runLifeSim(workspace.statePath, ["init"]);
+    const initResult = await runLifeSim(workspace.modelPath, ["init"]);
     expect(initResult.exitCode).toBeUndefined();
-    expect(initResult.json.state).toEqual({
+    expect(initResult.json.model).toEqual({
       profile: {},
       mood: {},
       relationships: {},
       memories: []
     });
 
-    const rememberResult = await runLifeSim(workspace.statePath, [
+    const rememberResult = await runLifeSim(workspace.modelPath, [
       "--reason",
       "User established this preference.",
       "action",
@@ -34,7 +34,7 @@ describe("life-sim example", () => {
     ]);
     expect(rememberResult.exitCode).toBeUndefined();
 
-    const moodResult = await runLifeSim(workspace.statePath, [
+    const moodResult = await runLifeSim(workspace.modelPath, [
       "--reason",
       "Scene tone changed.",
       "action",
@@ -43,17 +43,17 @@ describe("life-sim example", () => {
     ]);
     expect(moodResult.exitCode).toBeUndefined();
 
-    const patchResult = await runLifeSim(workspace.statePath, [
+    const updateResult = await runLifeSim(workspace.modelPath, [
       "--reason",
       "Scene moved to a quiet moment.",
-      "patch",
+      "update",
       '[{"op":"replace","path":"/mood/label","value":"calm"}]'
     ]);
-    expect(patchResult.exitCode).toBeUndefined();
+    expect(updateResult.exitCode).toBeUndefined();
 
-    const promptSummary = await runLifeSim(workspace.statePath, ["summary", "prompt"]);
-    expect(promptSummary.exitCode).toBeUndefined();
-    expect(promptSummary.json).toMatchObject({
+    const promptView = await runLifeSim(workspace.modelPath, ["view", "prompt"]);
+    expect(promptView.exitCode).toBeUndefined();
+    expect(promptView.json).toMatchObject({
       character: {},
       currentMood: {
         label: "calm",
@@ -63,35 +63,35 @@ describe("life-sim example", () => {
       importantMemories: ["Mio likes rainy afternoons."]
     });
 
-    const stateResult = await runLifeSim(workspace.statePath, ["state"]);
-    expect(stateResult.exitCode).toBeUndefined();
-    expect(stateResult.json.memories).toHaveLength(1);
-    expect(stateResult.json.memories[0]).toMatchObject({
+    const modelResult = await runLifeSim(workspace.modelPath, ["model"]);
+    expect(modelResult.exitCode).toBeUndefined();
+    expect(modelResult.json.memories).toHaveLength(1);
+    expect(modelResult.json.memories[0]).toMatchObject({
       text: "Mio likes rainy afternoons.",
       tags: ["preference"],
       pinned: true
     });
 
-    const validateResult = await runLifeSim(workspace.statePath, ["validate"]);
+    const validateResult = await runLifeSim(workspace.modelPath, ["validate"]);
     expect(validateResult.exitCode).toBeUndefined();
 
-    const migrateResult = await runLifeSim(workspace.statePath, ["migrate"]);
+    const migrateResult = await runLifeSim(workspace.modelPath, ["migrate"]);
     expect(migrateResult.exitCode).toBeUndefined();
     expect(migrateResult.json).toMatchObject({
       fromVersion: 1,
       toVersion: 1
     });
 
-    const logResult = await runLifeSim(workspace.statePath, ["log", "--limit", "2"]);
+    const logResult = await runLifeSim(workspace.modelPath, ["log", "--limit", "2"]);
     expect(logResult.exitCode).toBeUndefined();
     expect(logResult.json).toHaveLength(2);
-    expect(logResult.json.map((entry: any) => entry.type)).toEqual(["action", "patch"]);
+    expect(logResult.json.map((entry: any) => entry.type)).toEqual(["action", "update"]);
   });
 
-  it("exposes action, summary, and schema discovery for the example module", async () => {
+  it("exposes action, view, and schema discovery for the example module", async () => {
     const workspace = await createWorkspace();
 
-    const actions = await runLifeSim(workspace.statePath, ["action", "--list"]);
+    const actions = await runLifeSim(workspace.modelPath, ["action", "--list"]);
     expect(actions.exitCode).toBeUndefined();
     expect(actions.json).toEqual(
       expect.arrayContaining([
@@ -100,13 +100,11 @@ describe("life-sim example", () => {
       ])
     );
 
-    const summaries = await runLifeSim(workspace.statePath, ["summary", "--list"]);
-    expect(summaries.exitCode).toBeUndefined();
-    expect(summaries.json).toEqual(
-      expect.arrayContaining([{ name: "default" }, { name: "prompt" }])
-    );
+    const views = await runLifeSim(workspace.modelPath, ["view", "--list"]);
+    expect(views.exitCode).toBeUndefined();
+    expect(views.json).toEqual(expect.arrayContaining([{ name: "default" }, { name: "prompt" }]));
 
-    const actionSchema = await runLifeSim(workspace.statePath, ["schema", "action", "setMood"]);
+    const actionSchema = await runLifeSim(workspace.modelPath, ["action", "setMood", "--schema"]);
     expect(actionSchema.exitCode).toBeUndefined();
     expect(actionSchema.json).toMatchObject({
       type: "object",
@@ -119,10 +117,10 @@ describe("life-sim example", () => {
     });
   });
 
-  it("migrates an old life-sim state envelope to the current schema", async () => {
+  it("migrates an old life-sim model envelope to the current schema", async () => {
     const workspace = await createWorkspace();
     await writeFile(
-      workspace.statePath,
+      workspace.modelPath,
       JSON.stringify({
         rp: {
           module: "life-sim",
@@ -131,20 +129,20 @@ describe("life-sim example", () => {
           createdAt: "2026-05-03T12:00:00.000Z",
           updatedAt: "2026-05-03T12:00:00.000Z"
         },
-        state: {
+        model: {
           profile: { name: "Mio" },
           mood: { label: "curious" }
         }
       })
     );
 
-    const result = await runLifeSim(workspace.statePath, ["migrate"]);
+    const result = await runLifeSim(workspace.modelPath, ["migrate"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toMatchObject({
       fromVersion: 0,
       toVersion: 1,
-      state: {
+      model: {
         profile: { name: "Mio" },
         mood: { label: "curious" },
         relationships: {},
@@ -153,11 +151,11 @@ describe("life-sim example", () => {
     });
   });
 
-  it("rejects invalid input, invalid patches, and schema-violating patch results", async () => {
+  it("rejects invalid input, invalid patches, and schema-violating update results", async () => {
     const workspace = await createWorkspace();
-    await runLifeSim(workspace.statePath, ["init"]);
+    await runLifeSim(workspace.modelPath, ["init"]);
 
-    const invalidInput = await runLifeSim(workspace.statePath, [
+    const invalidInput = await runLifeSim(workspace.modelPath, [
       "action",
       "setMood",
       '{"valence":2}'
@@ -169,8 +167,8 @@ describe("life-sim example", () => {
       }
     });
 
-    const invalidPatch = await runLifeSim(workspace.statePath, [
-      "patch",
+    const invalidPatch = await runLifeSim(workspace.modelPath, [
+      "update",
       '{"op":"replace","path":"/mood/label","value":"bad"}'
     ]);
     expect(invalidPatch.exitCode).toBe(7);
@@ -180,8 +178,8 @@ describe("life-sim example", () => {
       }
     });
 
-    const schemaViolation = await runLifeSim(workspace.statePath, [
-      "patch",
+    const schemaViolation = await runLifeSim(workspace.modelPath, [
+      "update",
       '[{"op":"add","path":"/mood/valence","value":2}]'
     ]);
     expect(schemaViolation.exitCode).toBe(5);
@@ -200,8 +198,8 @@ describe("life-sim example", () => {
 
     expect(readme).toContain("action remember");
     expect(readme).toContain("action setMood");
-    expect(readme).toContain("summary prompt");
-    expect(readme).toContain("schema action setMood");
+    expect(readme).toContain("view prompt");
+    expect(readme).toContain("action setMood --schema");
     expect(readme).toContain("log --limit 5");
     expect(readme).toContain("--reason");
   });
@@ -209,26 +207,26 @@ describe("life-sim example", () => {
 
 async function createWorkspace(): Promise<{
   cwd: string;
-  statePath: string;
+  modelPath: string;
 }> {
   const cwd = await mkdtemp(path.join(tmpdir(), "rp-cli-life-sim-"));
   await mkdir(cwd, { recursive: true });
 
   return {
     cwd,
-    statePath: path.join(cwd, "mio.json")
+    modelPath: path.join(cwd, "mio.json")
   };
 }
 
 async function runLifeSim(
-  statePath: string,
+  modelPath: string,
   args: string[]
 ): Promise<{
   stdout: string;
   json: any;
   exitCode: string | number | undefined;
 }> {
-  return runCli(["--module", lifeSimModulePath, "--state", statePath, ...args]);
+  return runCli(["--module", lifeSimModulePath, "--model", modelPath, ...args]);
 }
 
 async function runCli(args: string[]): Promise<{

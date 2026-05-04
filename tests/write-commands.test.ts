@@ -12,55 +12,55 @@ afterEach(() => {
 });
 
 describe("write commands", () => {
-  it("applies a JSON Patch and persists the next state", async () => {
+  it("applies a raw update and persists the next model", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "patch",
+      "--model",
+      workspace.modelPath,
+      "update",
       '[{"op":"replace","path":"/value","value":"patched"}]'
     ]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toMatchObject({
       patch: [{ op: "replace", path: "/value", value: "patched" }],
-      state: { value: "patched", count: 1, memories: [] }
+      model: { value: "patched", count: 1, memories: [] }
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "patched",
       count: 1,
       memories: []
     });
   });
 
-  it("supports patch --dry-run without writing the state file", async () => {
+  it("supports update --dry-run without writing the model file", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "--dry-run",
-      "patch",
+      "update",
       '[{"op":"replace","path":"/value","value":"preview"}]'
     ]);
 
     expect(result.exitCode).toBeUndefined();
-    expect(result.json.state.value).toBe("preview");
-    await expectState(workspace.statePath, {
+    expect(result.json.model.value).toBe("preview");
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
     });
   });
 
-  it("supports patch input from --file", async () => {
+  it("supports update input from --file", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
     const patchPath = path.join(workspace.cwd, "patch.json");
@@ -72,31 +72,31 @@ describe("write commands", () => {
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "patch",
+      "--model",
+      workspace.modelPath,
+      "update",
       "--file",
       patchPath
     ]);
 
     expect(result.exitCode).toBeUndefined();
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "from-file",
       count: 1,
       memories: []
     });
   });
 
-  it("rejects patch results that violate the state schema", async () => {
+  it("rejects update results that violate the model schema", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "patch",
+      "--model",
+      workspace.modelPath,
+      "update",
       '[{"op":"replace","path":"/count","value":"bad"}]'
     ]);
 
@@ -106,7 +106,7 @@ describe("write commands", () => {
         code: "VALIDATION_ERROR"
       }
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
@@ -120,9 +120,9 @@ describe("write commands", () => {
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
-      "patch",
+      "--model",
+      workspace.modelPath,
+      "update",
       '[{"op":"replace","path":"/missing","value":"bad"}]'
     ]);
 
@@ -132,21 +132,21 @@ describe("write commands", () => {
         code: "PATCH_FAILED"
       }
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
     });
   });
 
-  it("lists actions without reading the state file", async () => {
+  it("lists actions without reading the model file", async () => {
     const workspace = await createWorkspace();
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "--list"
     ]);
@@ -160,15 +160,15 @@ describe("write commands", () => {
     );
   });
 
-  it("runs an action, applies its patch, and persists the next state", async () => {
+  it("runs an action, applies its patch, and persists the next model", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "setValue",
       '{"value":"from-action"}'
@@ -178,11 +178,11 @@ describe("write commands", () => {
     expect(result.json).toMatchObject({
       result: {
         patch: [{ op: "replace", path: "/value", value: "from-action" }],
-        state: { value: "from-action", count: 1, memories: [] }
+        model: { value: "from-action", count: 1, memories: [] }
       },
       message: "Value updated."
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "from-action",
       count: 1,
       memories: []
@@ -198,8 +198,8 @@ describe("write commands", () => {
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "setValue",
       "--file",
@@ -207,22 +207,22 @@ describe("write commands", () => {
     ]);
 
     expect(result.exitCode).toBeUndefined();
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "from-file",
       count: 1,
       memories: []
     });
   });
 
-  it("supports action --dry-run without writing the state file", async () => {
+  it("supports action --dry-run without writing the model file", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "--dry-run",
       "action",
       "setValue",
@@ -230,8 +230,8 @@ describe("write commands", () => {
     ]);
 
     expect(result.exitCode).toBeUndefined();
-    expect(result.json.result.state.value).toBe("preview-action");
-    await expectState(workspace.statePath, {
+    expect(result.json.result.model.value).toBe("preview-action");
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
@@ -245,8 +245,8 @@ describe("write commands", () => {
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "setValue",
       '{"value":123}'
@@ -258,7 +258,7 @@ describe("write commands", () => {
         code: "ACTION_INPUT_INVALID"
       }
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
@@ -272,8 +272,8 @@ describe("write commands", () => {
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "noop",
       "{}"
@@ -284,7 +284,7 @@ describe("write commands", () => {
       result: null,
       message: "No changes."
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
@@ -298,8 +298,8 @@ describe("write commands", () => {
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "badReturn",
       "{}"
@@ -311,22 +311,22 @@ describe("write commands", () => {
         code: "ACTION_RETURN_INVALID"
       }
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
     });
   });
 
-  it("rejects action patches that would violate the state schema", async () => {
+  it("rejects action patches that would violate the model schema", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "breakSchema",
       "{}"
@@ -338,7 +338,7 @@ describe("write commands", () => {
         code: "VALIDATION_ERROR"
       }
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
@@ -352,8 +352,8 @@ describe("write commands", () => {
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
       "explode",
       "{}"
@@ -367,17 +367,17 @@ describe("write commands", () => {
     });
   });
 
-  it("rejects actions that directly mutate state outside JSON Patch", async () => {
+  it("rejects actions that directly mutate model outside JSON Patch", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
     const result = await runCli([
       "--module",
       workspace.modulePath,
-      "--state",
-      workspace.statePath,
+      "--model",
+      workspace.modelPath,
       "action",
-      "mutateState",
+      "mutateModel",
       "{}"
     ]);
 
@@ -387,7 +387,7 @@ describe("write commands", () => {
         code: "ACTION_RUNTIME_ERROR"
       }
     });
-    await expectState(workspace.statePath, {
+    await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
       memories: []
@@ -398,12 +398,12 @@ describe("write commands", () => {
 async function createWorkspace(): Promise<{
   cwd: string;
   modulePath: string;
-  statePath: string;
+  modelPath: string;
 }> {
   const cwd = await mkdtemp(path.join(tmpdir(), "rp-cli-write-"));
   await mkdir(cwd, { recursive: true });
   const modulePath = path.join(cwd, "rp.module.ts");
-  const statePath = path.join(cwd, "rp.state.json");
+  const modelPath = path.join(cwd, "rp.model.json");
 
   await writeFile(
     modulePath,
@@ -415,7 +415,7 @@ async function createWorkspace(): Promise<{
       "  text: z.string(),",
       "  createdAt: z.string()",
       "});",
-      "const StateSchema = z.object({",
+      "const ModelSchema = z.object({",
       "  value: z.string(),",
       "  count: z.number(),",
       "  memories: z.array(MemorySchema).default([])",
@@ -423,9 +423,9 @@ async function createWorkspace(): Promise<{
       "export default defineModule({",
       '  name: "write-phase",',
       "  version: 1,",
-      "  state: {",
+      "  model: {",
       "    version: 1,",
-      "    schema: StateSchema,",
+      "    schema: ModelSchema,",
       '    defaults: () => ({ value: "ready", count: 1, memories: [] })',
       "  },",
       "  actions: {",
@@ -463,11 +463,11 @@ async function createWorkspace(): Promise<{
       "      input: z.object({}),",
       '      run: () => ({ patch: [{ op: "replace", path: "/count", value: "bad" }] })',
       "    },",
-      "    mutateState: {",
-      '      description: "Mutate state directly.",',
+      "    mutateModel: {",
+      '      description: "Mutate model directly.",',
       "      input: z.object({}),",
-      "      run({ state }) {",
-      '        state.value = "mutated";',
+      "      run({ model }) {",
+      '        model.value = "mutated";',
       "        return { patch: [] };",
       "      }",
       "    },",
@@ -481,25 +481,25 @@ async function createWorkspace(): Promise<{
     ].join("\n")
   );
 
-  return { cwd, modulePath, statePath };
+  return { cwd, modulePath, modelPath };
 }
 
-async function initWorkspace(workspace: { modulePath: string; statePath: string }): Promise<void> {
+async function initWorkspace(workspace: { modulePath: string; modelPath: string }): Promise<void> {
   const result = await runCli([
     "--module",
     workspace.modulePath,
-    "--state",
-    workspace.statePath,
+    "--model",
+    workspace.modelPath,
     "init"
   ]);
 
   expect(result.exitCode).toBeUndefined();
 }
 
-async function expectState(statePath: string, state: unknown): Promise<void> {
-  const envelope = JSON.parse(await readFile(statePath, "utf8"));
+async function expectModel(modelPath: string, model: unknown): Promise<void> {
+  const envelope = JSON.parse(await readFile(modelPath, "utf8"));
 
-  expect(envelope.state).toEqual(state);
+  expect(envelope.model).toEqual(model);
 }
 
 async function runCli(args: string[]): Promise<{

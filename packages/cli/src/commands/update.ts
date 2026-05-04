@@ -4,23 +4,23 @@ import {
   applyJsonPatch,
   assertJsonPatch,
   createRuntimeContext,
-  hashState,
+  hashModel,
   loadModule,
-  readStateFile,
-  updateStateEnvelope,
-  validateAuthorState,
-  validateStateFile,
-  withStateLock,
+  readModelFile,
+  updateModelEnvelope,
+  validateAuthorModel,
+  validateModelFile,
+  withModelLock,
   writeJsonFileAtomic
 } from "@rp-cli/core/internal";
 import { readJsonInput } from "../jsonInput.js";
 import { runCommand } from "../commandRunner.js";
 import { writeJson } from "../output.js";
 
-export function registerPatchCommand(program: Command): void {
+export function registerUpdateCommand(program: Command): void {
   program
-    .command("patch")
-    .description("Apply a JSON Patch to author state.")
+    .command("update")
+    .description("Apply a JSON Patch update to author model.")
     .argument("[patch]", "JSON Patch string")
     .option("--file <path>", "read JSON Patch from a file")
     .action(async (patchArgument: string | undefined, options: { file?: string }, command) => {
@@ -34,30 +34,30 @@ export function registerPatchCommand(program: Command): void {
         assertJsonPatch(patchInput);
         const patch = patchInput;
 
-        await withStateLock(paths, async () => {
+        await withModelLock(paths, async () => {
           const module = await loadModule(paths.modulePath);
-          const envelope = validateStateFile(module, await readStateFile(paths.statePath));
-          const nextState = validateAuthorState(module, applyJsonPatch(envelope.state, patch));
+          const envelope = validateModelFile(module, await readModelFile(paths.modelPath));
+          const nextModel = validateAuthorModel(module, applyJsonPatch(envelope.model, patch));
           const ctx = createRuntimeContext();
-          const nextEnvelope = updateStateEnvelope(envelope, module, nextState, ctx.now());
+          const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
 
           if (!dryRun) {
-            await writeJsonFileAtomic(paths.statePath, nextEnvelope);
+            await writeJsonFileAtomic(paths.modelPath, nextEnvelope);
             await appendJsonLogEntry(paths.logPath, {
               id: ctx.id("log"),
               time: ctx.now(),
-              type: "patch",
+              type: "update",
               ...(reason === undefined ? {} : { reason }),
               patch,
-              stateHashBefore: hashState(envelope.state),
-              stateHashAfter: hashState(nextState)
+              modelHashBefore: hashModel(envelope.model),
+              modelHashAfter: hashModel(nextModel)
             });
           }
 
           writeJson(
             {
               patch,
-              state: nextState
+              model: nextModel
             },
             pretty
           );

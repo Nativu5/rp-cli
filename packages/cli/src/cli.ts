@@ -4,10 +4,9 @@ import { registerActionCommand } from "./commands/action.js";
 import { registerInitCommand } from "./commands/init.js";
 import { registerLogCommand } from "./commands/log.js";
 import { registerMigrateCommand } from "./commands/migrate.js";
-import { registerPatchCommand } from "./commands/patch.js";
-import { registerSchemaCommand } from "./commands/schema.js";
-import { registerStateCommand } from "./commands/state.js";
-import { registerSummaryCommand } from "./commands/summary.js";
+import { registerModelCommand } from "./commands/model.js";
+import { registerUpdateCommand } from "./commands/update.js";
+import { registerViewCommand } from "./commands/view.js";
 import { registerValidateCommand } from "./commands/validate.js";
 
 export function createProgram(): Command {
@@ -15,10 +14,10 @@ export function createProgram(): Command {
 
   program
     .name("rp")
-    .description("Zod-based command line state runtime for AI agents.")
+    .description("Zod-based command line model runtime for AI agents.")
     .version("0.0.0")
     .option("--module <path>", "module file path")
-    .option("--state <path>", "state file path")
+    .option("--model <path>", "model file path")
     .option("--pretty", "pretty-print JSON output")
     .option("--dry-run", "preview write commands without persisting")
     .option("--reason <text>", "write reason for audit logs");
@@ -26,11 +25,10 @@ export function createProgram(): Command {
   registerInitCommand(program);
   registerValidateCommand(program);
   registerMigrateCommand(program);
-  registerStateCommand(program);
-  registerPatchCommand(program);
+  registerModelCommand(program);
+  registerUpdateCommand(program);
   registerActionCommand(program);
-  registerSummaryCommand(program);
-  registerSchemaCommand(program);
+  registerViewCommand(program);
   registerLogCommand(program);
 
   return program;

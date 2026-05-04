@@ -7,13 +7,13 @@ import { defineModule } from "@rp-cli/core";
 import {
   RpError,
   assertCurrentSchemaVersion,
-  exportStateSchema,
+  exportModelSchema,
   loadModule,
   parseModule,
   parseEnvelope,
   resolveRpPaths,
   toErrorShape,
-  validateStateFile
+  validateModelFile
 } from "@rp-cli/core/internal";
 
 describe("runtime foundations", () => {
@@ -35,7 +35,7 @@ describe("runtime foundations", () => {
     const module = defineModule({
       name: "valid",
       version: 1,
-      state: {
+      model: {
         version: 1,
         schema: z.object({ value: z.string() }),
         defaults: () => ({ value: "ready" })
@@ -49,12 +49,29 @@ describe("runtime foundations", () => {
           })
         }
       },
-      summaries: {
-        default: ({ state }) => state
+      views: {
+        default: ({ model }) => model
       }
     });
 
     expect(module.name).toBe("valid");
+  });
+
+  it("rejects old state and summaries module fields", () => {
+    expect(() =>
+      parseModule({
+        name: "old-fields",
+        version: 1,
+        state: {
+          version: 1,
+          schema: z.object({ value: z.string() }),
+          defaults: () => ({ value: "ready" })
+        },
+        summaries: {
+          default: () => ({})
+        }
+      })
+    ).toThrow(RpError);
   });
 
   it("loads and validates a local TypeScript module", async () => {
@@ -69,7 +86,7 @@ describe("runtime foundations", () => {
         "export default defineModule({",
         '  name: "loaded",',
         "  version: 1,",
-        "  state: {",
+        "  model: {",
         "    version: 1,",
         "    schema: z.object({ value: z.string() }),",
         '    defaults: () => ({ value: "ready" })',
@@ -81,7 +98,7 @@ describe("runtime foundations", () => {
     const module = await loadModule(modulePath);
 
     expect(module.name).toBe("loaded");
-    expect(module.state.version).toBe(1);
+    expect(module.model.version).toBe(1);
   });
 
   it("rejects a local module with an invalid default export", async () => {
@@ -107,7 +124,7 @@ describe("runtime foundations", () => {
     });
   });
 
-  it("validates state envelopes and rejects missing author state", () => {
+  it("validates model envelopes and rejects missing author model", () => {
     const envelope = parseEnvelope({
       rp: {
         module: "valid",
@@ -116,10 +133,10 @@ describe("runtime foundations", () => {
         createdAt: "2026-05-03T12:00:00.000Z",
         updatedAt: "2026-05-03T12:00:00.000Z"
       },
-      state: { value: "ready" }
+      model: { value: "ready" }
     });
 
-    expect(envelope.state).toEqual({ value: "ready" });
+    expect(envelope.model).toEqual({ value: "ready" });
     expect(() =>
       parseEnvelope({
         rp: {
@@ -137,7 +154,7 @@ describe("runtime foundations", () => {
     const module = defineModule({
       name: "valid",
       version: 1,
-      state: {
+      model: {
         version: 2,
         schema: z.object({}),
         defaults: () => ({})
@@ -158,11 +175,11 @@ describe("runtime foundations", () => {
     ).toThrowError(/older/);
   });
 
-  it("rejects state files owned by a different module", () => {
+  it("rejects model files owned by a different module", () => {
     const module = defineModule({
       name: "current-module",
       version: 1,
-      state: {
+      model: {
         version: 1,
         schema: z.object({ value: z.string() }),
         defaults: () => ({ value: "ready" })
@@ -170,7 +187,7 @@ describe("runtime foundations", () => {
     });
 
     expect(() =>
-      validateStateFile(module, {
+      validateModelFile(module, {
         rp: {
           module: "other-module",
           moduleVersion: 1,
@@ -178,7 +195,7 @@ describe("runtime foundations", () => {
           createdAt: "2026-05-03T12:00:00.000Z",
           updatedAt: "2026-05-03T12:00:00.000Z"
         },
-        state: {
+        model: {
           value: "ready"
         }
       })
@@ -187,21 +204,21 @@ describe("runtime foundations", () => {
 
   it("uses CLI options before environment variables when resolving paths", () => {
     const previousModule = process.env.RP_MODULE;
-    const previousState = process.env.RP_STATE;
+    const previousModel = process.env.RP_MODEL;
     process.env.RP_MODULE = "./env.module.ts";
-    process.env.RP_STATE = "./env.state.json";
+    process.env.RP_MODEL = "./env.model.json";
 
     try {
       const paths = resolveRpPaths({
         cwd: "/tmp/rp-cli-test",
         modulePath: "./cli.module.ts",
-        statePath: "./cli.state.json"
+        modelPath: "./cli.model.json"
       });
 
       expect(paths.modulePath).toBe("/tmp/rp-cli-test/cli.module.ts");
-      expect(paths.statePath).toBe("/tmp/rp-cli-test/cli.state.json");
-      expect(paths.logPath).toBe("/tmp/rp-cli-test/cli.state.json.log.jsonl");
-      expect(paths.lockPath).toBe("/tmp/rp-cli-test/cli.state.json.lock");
+      expect(paths.modelPath).toBe("/tmp/rp-cli-test/cli.model.json");
+      expect(paths.logPath).toBe("/tmp/rp-cli-test/cli.model.json.log.jsonl");
+      expect(paths.lockPath).toBe("/tmp/rp-cli-test/cli.model.json.lock");
     } finally {
       if (previousModule === undefined) {
         delete process.env.RP_MODULE;
@@ -209,10 +226,10 @@ describe("runtime foundations", () => {
         process.env.RP_MODULE = previousModule;
       }
 
-      if (previousState === undefined) {
-        delete process.env.RP_STATE;
+      if (previousModel === undefined) {
+        delete process.env.RP_MODEL;
       } else {
-        process.env.RP_STATE = previousState;
+        process.env.RP_MODEL = previousModel;
       }
     }
   });
@@ -226,11 +243,11 @@ describe("runtime foundations", () => {
     });
   });
 
-  it("exports Zod 4 state schemas as JSON Schema", () => {
+  it("exports Zod 4 model schemas as JSON Schema", () => {
     const module = defineModule({
       name: "schema-export",
       version: 1,
-      state: {
+      model: {
         version: 1,
         schema: z.object({
           value: z.string()
@@ -239,7 +256,7 @@ describe("runtime foundations", () => {
       }
     });
 
-    expect(exportStateSchema(module)).toMatchObject({
+    expect(exportModelSchema(module)).toMatchObject({
       type: "object",
       properties: {
         value: {

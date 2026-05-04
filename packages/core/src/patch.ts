@@ -33,13 +33,13 @@ export function assertJsonPatch(patch: unknown): asserts patch is JsonPatch {
   }
 }
 
-export function applyJsonPatch<TState>(state: TState, patch: JsonPatch): TState {
+export function applyJsonPatch<TModel>(model: TModel, patch: JsonPatch): TModel {
   assertJsonPatch(patch);
 
   try {
     const patchToApply = fastJsonPatch.deepClone(patch) as JsonPatch;
 
-    return fastJsonPatch.applyPatch(state, patchToApply, true, false, true).newDocument;
+    return fastJsonPatch.applyPatch(model, patchToApply, true, false, true).newDocument;
   } catch (error) {
     throw new RpError("PATCH_FAILED", "failed to apply JSON Patch", {
       cause: error instanceof Error ? error.message : String(error)

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createProgram } from "../packages/cli/src/cli.js";
 
 const originalExitCode = process.exitCode;
-const lifeSimModulePath = path.resolve("examples/life-sim/rp.module.ts");
+const lifeSimModulePath = path.resolve("examples/life-sim/src/rp.module.ts");
 
 afterEach(() => {
   process.exitCode = originalExitCode;
@@ -22,17 +22,9 @@ describe("life-sim example", () => {
       profile: {},
       mood: {},
       relationships: {},
-      memories: []
+      level: 1,
+      wear: {}
     });
-
-    const rememberResult = await runLifeSim(workspace.modelPath, [
-      "--reason",
-      "User established this preference.",
-      "action",
-      "remember",
-      '{"text":"Mio likes rainy afternoons.","tags":["preference"],"pinned":true}'
-    ]);
-    expect(rememberResult.exitCode).toBeUndefined();
 
     const moodResult = await runLifeSim(workspace.modelPath, [
       "--reason",
@@ -42,6 +34,18 @@ describe("life-sim example", () => {
       '{"label":"flustered but happy","valence":0.68,"arousal":0.4}'
     ]);
     expect(moodResult.exitCode).toBeUndefined();
+
+    const levelResult = await runLifeSim(workspace.modelPath, ["action", "levelUp", "{}"]);
+    expect(levelResult.exitCode).toBeUndefined();
+
+    const wearResult = await runLifeSim(workspace.modelPath, [
+      "--reason",
+      "Mio changed for the next scene.",
+      "action",
+      "setWear",
+      '{"top":"blue blouse","bottom":"gray skirt"}'
+    ]);
+    expect(wearResult.exitCode).toBeUndefined();
 
     const updateResult = await runLifeSim(workspace.modelPath, [
       "--reason",
@@ -60,16 +64,24 @@ describe("life-sim example", () => {
         valence: 0.68,
         arousal: 0.4
       },
-      importantMemories: ["Mio likes rainy afternoons."]
+      level: 2,
+      wearing: {
+        top: "blue blouse",
+        bottom: "gray skirt"
+      }
     });
 
     const modelResult = await runLifeSim(workspace.modelPath, ["model"]);
     expect(modelResult.exitCode).toBeUndefined();
-    expect(modelResult.json.memories).toHaveLength(1);
-    expect(modelResult.json.memories[0]).toMatchObject({
-      text: "Mio likes rainy afternoons.",
-      tags: ["preference"],
-      pinned: true
+    expect(modelResult.json).toMatchObject({
+      level: 2,
+      mood: {
+        label: "calm"
+      },
+      wear: {
+        top: "blue blouse",
+        bottom: "gray skirt"
+      }
     });
 
     const validateResult = await runLifeSim(workspace.modelPath, ["validate"]);
@@ -95,8 +107,11 @@ describe("life-sim example", () => {
     expect(actions.exitCode).toBeUndefined();
     expect(actions.json).toEqual(
       expect.arrayContaining([
-        { name: "remember", description: "Add a long-term memory." },
-        { name: "setMood", description: "Update current mood." }
+        { name: "setMood", description: "Update current mood." },
+        { name: "setLevel", description: "Set the character level." },
+        { name: "levelUp", description: "Increase level by 1." },
+        { name: "setWear", description: "Update worn items." },
+        { name: "removeWear", description: "Remove a worn item." }
       ])
     );
 
@@ -146,7 +161,8 @@ describe("life-sim example", () => {
         profile: { name: "Mio" },
         mood: { label: "curious" },
         relationships: {},
-        memories: []
+        level: 1,
+        wear: {}
       }
     });
   });

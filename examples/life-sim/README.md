@@ -10,19 +10,19 @@ creator design -> Zod model schema -> semantic actions -> prompt views -> CLI us
 
 ## The Creative Idea
 
-Imagine a slice-of-life roleplay centered on Mio. The agent needs to remember stable canon while still writing scenes naturally:
+Imagine a slice-of-life roleplay centered on Mio. The agent needs stable model context while still writing scenes naturally:
 
 - who Mio is
 - how she currently feels
 - what she is wearing
 - how relationships are changing
-- which facts are important enough to bring into future prompts
+- which state is important enough to bring into future prompts
 
 Without a model runtime, those facts tend to drift or disappear inside chat history. RP CLI gives the creator a place to make those facts explicit.
 
 ## Design Philosophy
 
-RP CLI leverages Linux's filesystem concept: **each directory represents a character**. When you operate inside a character's directory, you don't need to specify a filename—the module is found automatically.
+RP CLI leverages Linux's filesystem concept: **each directory represents a character**. When you operate inside a character's directory, the default `rp.module.ts` and `rp.model.json` paths are enough.
 
 ```
 examples/life-sim/
@@ -30,10 +30,10 @@ examples/life-sim/
 │   └── rp.module.ts     # Shared module source
 ├── mio/                  # Mio's directory
 │   └── rp.module.ts@     # symlink -> src/rp.module.ts
-│   └── model.json        # Mio's state
+│   └── rp.model.json     # Mio's generated state
 └── yuki/                 # Yuki's directory
     └── rp.module.ts@     # symlink -> src/rp.module.ts
-    └── model.json        # Yuki's state
+    └── rp.model.json     # Yuki's generated state
 ```
 
 ## Creator View
@@ -48,7 +48,7 @@ In this example, the creator maps story design into model areas:
 | Current emotional beat | `mood`          | Scene-local emotional signals such as label, valence, arousal, and stress. |
 | Social continuity      | `relationships` | Per-character relationship data and notes.                                 |
 | Numeric state          | `level`         | Simple numeric state for experience, power level, etc.                     |
-| Clothing state         | `wear`          | Four-slot wardrobe: top, bottom, underwear, accessory.                    |
+| Clothing state         | `wear`          | Four-slot wardrobe: top, bottom, underwear, accessory.                     |
 
 The creator exposes semantic actions:
 
@@ -69,7 +69,7 @@ That split is the key creative benefit: creators decide what belongs in canon, w
 
 The user or agent does not edit `rp.module.ts`. It uses the `rp` CLI.
 
-Each character lives in its own directory. Operating from within a character's directory means the module is discovered automatically:
+Each character lives in its own directory. Operating from within a character's directory means the default paths can be used:
 
 ```bash
 # Initialize Mio's model
@@ -86,7 +86,7 @@ rp action setLevel '{"level":5}'
 rp action levelUp
 
 # Update clothing
-rp action setWear '{"top":"blue blouse","bottom":"gray skirt"}'
+rp action setWear '{"top":"blue blouse","bottom":"gray skirt","accessory":"silver hairpin"}'
 
 # Remove an item
 rp action removeWear '{"slot":"accessory"}'
@@ -97,17 +97,6 @@ rp view prompt
 # Read raw model
 rp model
 ```
-
-## Working Across Characters
-
-You can target a specific character's directory without changing your working directory:
-
-```bash
-rp --dir examples/life-sim/mio action setMood '{"label":"sleepy"}'
-rp --dir examples/life-sim/yuki action setMood '{"label":"energetic"}'
-```
-
-This makes it natural to manage multiple characters without filename arguments.
 
 ## Discovery
 
@@ -169,22 +158,23 @@ rp log --limit 5
 
 `--reason` is stored in the audit log, not in role model. This helps an agent or creator understand why a change happened without polluting the story model.
 
-## Shorter Agent Commands
+## Working Across Characters
 
-For an agent session, set paths once:
-
-```bash
-export RP_DIR=examples/life-sim/mio
-```
-
-Then the agent can use concise commands:
+You can target a specific character's directory without changing your working directory:
 
 ```bash
-rp view prompt
-rp action setLevel '{"level":10}'
-rp action setWear '{"top":"sweater"}'
-rp log --limit 5
+# Option 1. Export environment variables in advance
+export RP_MODULE=examples/life-sim/mio/rp.module.ts
+export RP_MODEL=examples/life-sim/mio/rp.model.json
+
+# Option 2. Use flags on each command
+rp --module examples/life-sim/mio/rp.module.ts --model examples/life-sim/mio/rp.model.json \
+  action setMood '{"label":"sleepy"}'
+rp --module examples/life-sim/yuki/rp.module.ts --model examples/life-sim/yuki/rp.model.json \
+  action setMood '{"label":"energetic"}'
 ```
+
+It's more natural to use separated directories for each character, but RP CLI is flexible enough to support a shared module and model if that fits your story design better.
 
 ## Why This Helps Creativity
 

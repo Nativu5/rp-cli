@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { readFileSync } from "fs";
+import { readFileSync, realpathSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { registerActionCommand } from "./commands/action.js";
@@ -48,6 +48,18 @@ export function createProgram(): Command {
   return program;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+export function isDirectCliExecution(argvEntry: string | undefined): boolean {
+  if (!argvEntry) {
+    return false;
+  }
+
+  try {
+    return realpathSync(__filename) === realpathSync(argvEntry);
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectCliExecution(process.argv[1])) {
   await createProgram().parseAsync(process.argv);
 }

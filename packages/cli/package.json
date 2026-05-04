@@ -7,11 +7,18 @@
   },
   "main": "dist/cli.js",
   "types": "dist/cli.d.ts",
+  "files": [
+    "dist"
+  ],
   "bin": {
     "rp": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "prebuild": "npm run build -w @rp-cli/core",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "postbuild": "chmod +x dist/cli.js",
+    "prepack": "npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

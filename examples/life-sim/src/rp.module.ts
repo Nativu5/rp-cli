@@ -1,5 +1,4 @@
 import { defineModule } from "@rp-cli/core";
-import {} from "@rp-cli/core";
 import { z } from "zod";
 
 const ModelSchema = z.object({
@@ -115,7 +114,7 @@ export default defineModule({
       run({ input }) {
         return {
           patch: Object.entries(input).map(([key, value]) => ({
-            op: "replace",
+            op: "add",
             path: `/wear/${key}`,
             value
           })),

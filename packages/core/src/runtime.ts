@@ -11,7 +11,7 @@ import {
   writeJsonFileAtomic,
   withModelLock
 } from "./model.js";
-import { loadModule } from "./moduleParser.js";
+import { loadModule } from "./module.js";
 import { applyJsonPatch, assertJsonPatch } from "./patch.js";
 import type { AnyZodSchema, JsonPatch, RpModelFile, RpPaths } from "./types.js";
 import { assertModuleCompatibility, validateRoleModel, validateModelFile } from "./validation.js";

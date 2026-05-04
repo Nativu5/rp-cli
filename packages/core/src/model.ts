@@ -184,11 +184,19 @@ export async function withModelLock<T>(paths: RpPaths, run: () => Promise<T>): P
   try {
     result = await run();
   } catch (error) {
-    await releaseModelLockIgnoringErrors(release);
+    try {
+      await release();
+    } catch {
+      // Preserve the original command error. A release failure after a command failure is secondary.
+    }
     throw error;
   }
 
-  await releaseModelLock(paths.lockPath, release);
+  try {
+    await release();
+  } catch (error) {
+    throw modelLockedError(paths.lockPath, "failed to release model lock", error);
+  }
   return result;
 }
 
@@ -197,22 +205,6 @@ function modelLockedError(lockPath: string, message: string, error: unknown): Rp
     cause: error instanceof Error ? error.message : String(error),
     code: isNodeError(error) ? error.code : undefined
   });
-}
-
-async function releaseModelLock(lockPath: string, release: () => Promise<void>): Promise<void> {
-  try {
-    await release();
-  } catch (error) {
-    throw modelLockedError(lockPath, "failed to release model lock", error);
-  }
-}
-
-async function releaseModelLockIgnoringErrors(release: () => Promise<void>): Promise<void> {
-  try {
-    await release();
-  } catch {
-    // Preserve the original command error. A release failure after a command failure is secondary.
-  }
 }
 
 // ---------------------------------------------------------------------------

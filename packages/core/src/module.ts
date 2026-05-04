@@ -21,7 +21,7 @@ export async function loadModule(modulePath: string): Promise<RpModule> {
     });
   }
 
-  assertSupportedModuleExtension(modulePath);
+  assertModuleExt(modulePath);
 
   try {
     loaded = await import(pathToFileURL(modulePath).href);
@@ -44,7 +44,7 @@ export async function loadModule(modulePath: string): Promise<RpModule> {
   return parseModule(candidate);
 }
 
-function assertSupportedModuleExtension(modulePath: string): void {
+function assertModuleExt(modulePath: string): void {
   const extension = path.extname(modulePath);
 
   if (SUPPORTED_MODULE_EXTENSIONS.includes(extension as (typeof SUPPORTED_MODULE_EXTENSIONS)[number])) {

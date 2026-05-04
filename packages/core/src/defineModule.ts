@@ -1,4 +1,4 @@
-import { parseModule } from "./moduleParser.js";
+import { parseModule } from "./module.js";
 import type { AnyZodSchema, RpModule, RpModuleDefinition, SchemaOutput } from "./types.js";
 
 export function defineModule<

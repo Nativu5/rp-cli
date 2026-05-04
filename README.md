@@ -217,8 +217,8 @@ This separates creative design from runtime mechanics. The creator owns the worl
 | --------------------------- | -------------------------------------------------------- |
 | `rp init`                   | Create a model file from module defaults.                |
 | `rp validate`               | Validate the current model file and schema version.      |
-| `rp model`                  | Output author model. Use `--raw` for the full envelope.  |
-| `rp update <json>`          | Apply JSON Patch to author model.                        |
+| `rp model`                  | Output role model. Use `--raw` for the full envelope.    |
+| `rp update <json>`          | Apply JSON Patch to role model.                          |
 | `rp action <name> <json>`   | Run a semantic write action.                             |
 | `rp action --list`          | List available actions.                                  |
 | `rp view [name]`            | Run a read-only view.                                    |
@@ -254,19 +254,21 @@ whose `name` differs from the model file's `rp.module`, RP CLI returns
 `MODULE_MODEL_MISMATCH` instead of validating or writing the file. Schema
 evolution is still controlled by `rp.schemaVersion`.
 
-Action and view handlers receive a deep-frozen clone of author model data. Direct
+Action and view handlers receive a deep-frozen clone of role model data. Direct
 mutation inside creator code fails at runtime; writes must be expressed as JSON
 Patch operations returned by actions or passed to `rp update`.
 
 ## JSON Patch
 
-`rp update` accepts standard JSON Patch arrays. Patch paths are relative to the author model root, not to the full envelope.
+`rp update` accepts standard JSON Patch arrays. Patch paths are relative to the role model root, not to the full envelope.
 
 ```bash
 rp update '[{"op":"add","path":"/memories/-","value":{"id":"mem_1","text":"Mio likes rain.","pinned":true,"createdAt":"2026-05-04T00:00:00.000Z"}}]'
 ```
 
 The patched model must pass the module Zod schema before it is written.
+Schema violations return `MODEL_VALIDATION_ERROR`; invalid JSON Patch syntax
+or failed patch application still use `PATCH_*` errors.
 
 ## Audit Logs
 
@@ -282,7 +284,10 @@ Logs include the operation type, reason, patch, action metadata when available, 
 rp log --limit 5
 ```
 
-`--reason` is written to the audit log and is not stored in author model data.
+`--reason` is written to the audit log and is not stored in role model data.
+Audit log read failures use `LOG_READ_FAILED`, malformed log JSONL uses
+`LOG_INVALID_JSON`, invalid `rp log --limit` values use `LOG_LIMIT_INVALID`,
+and append failures use `LOG_WRITE_FAILED`.
 
 ## Write Locking
 

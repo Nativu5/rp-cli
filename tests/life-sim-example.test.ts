@@ -181,7 +181,7 @@ describe("life-sim example", () => {
     expect(schemaViolation.exitCode).toBe(5);
     expect(schemaViolation.json).toMatchObject({
       error: {
-        code: "VALIDATION_ERROR"
+        code: "MODEL_VALIDATION_ERROR"
       }
     });
   });

@@ -120,7 +120,7 @@ describe("runtime foundations", () => {
     });
   });
 
-  it("validates model envelopes and rejects missing author model", () => {
+  it("validates model envelopes and rejects missing role model", () => {
     const envelope = parseEnvelope({
       rp: {
         module: "valid",
@@ -232,9 +232,15 @@ describe("runtime foundations", () => {
   });
 
   it("formats unknown errors with the requested fallback code", () => {
-    expect(toErrorShape(new Error("boom"), "WRITE_FAILED")).toEqual({
+    expect(toErrorShape(new Error("boom"))).toEqual({
       error: {
-        code: "WRITE_FAILED",
+        code: "INTERNAL_ERROR",
+        message: "boom"
+      }
+    });
+    expect(toErrorShape(new Error("boom"), "MODEL_WRITE_FAILED")).toEqual({
+      error: {
+        code: "MODEL_WRITE_FAILED",
         message: "boom"
       }
     });

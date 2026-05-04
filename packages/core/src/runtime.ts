@@ -14,18 +14,18 @@ import { withModelLock } from "./modelLock.js";
 import { loadModule } from "./moduleLoader.js";
 import { applyJsonPatch, assertJsonPatch } from "./patch.js";
 import type { AnyZodSchema, JsonPatch, RpModelFile, RpPaths } from "./types.js";
-import { assertModuleCompatibility, validateAuthorModel, validateModelFile } from "./validation.js";
+import { assertModuleCompatibility, validateRoleModel, validateModelFile } from "./validation.js";
 import { findView, listViews, runView } from "./view.js";
 
 export async function initModelOperation(input: { paths: RpPaths; force?: boolean }): Promise<RpModelFile> {
   return withModelLock(input.paths, async () => {
     if (!input.force && (await pathExists(input.paths.modelPath))) {
-      throw new RpError("WRITE_FAILED", `model file already exists: ${input.paths.modelPath}`);
+      throw new RpError("MODEL_ALREADY_EXISTS", `model file already exists: ${input.paths.modelPath}`);
     }
 
     const module = await loadModule(input.paths.modulePath);
     const defaults = await module.model.defaults();
-    const model = validateAuthorModel(module, defaults);
+    const model = validateRoleModel(module, defaults);
     const envelope = createModelEnvelope(module, model);
 
     await writeJsonFileAtomic(input.paths.modelPath, envelope);
@@ -115,7 +115,7 @@ export async function runActionOperation(input: {
       };
     }
 
-    const nextModel = validateAuthorModel(module, applyJsonPatch(envelope.model, result.patch));
+    const nextModel = validateRoleModel(module, applyJsonPatch(envelope.model, result.patch));
     const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
 
     if (!input.dryRun) {
@@ -157,7 +157,7 @@ export async function applyUpdateOperation(input: {
   return withModelLock(input.paths, async () => {
     const module = await loadModule(input.paths.modulePath);
     const envelope = validateModelFile(module, await readModelFile(input.paths.modelPath));
-    const nextModel = validateAuthorModel(module, applyJsonPatch(envelope.model, patch));
+    const nextModel = validateRoleModel(module, applyJsonPatch(envelope.model, patch));
     const ctx = createRuntimeContext();
     const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
 
@@ -213,7 +213,7 @@ export async function migrateModelOperation(input: { paths: RpPaths; dryRun?: bo
     const comparison = compareSchemaVersions(fromVersion, toVersion);
 
     if (comparison === "current") {
-      const model = validateAuthorModel(module, envelope.model);
+      const model = validateRoleModel(module, envelope.model);
 
       return { fromVersion, toVersion, model };
     }
@@ -226,7 +226,7 @@ export async function migrateModelOperation(input: { paths: RpPaths; dryRun?: bo
     }
 
     const ctx = createRuntimeContext();
-    const nextModel = validateAuthorModel(
+    const nextModel = validateRoleModel(
       module,
       await runMigration({
         migrate: module.model.migrate,

@@ -100,7 +100,7 @@ describe("write commands", () => {
     expect(result.exitCode).toBe(5);
     expect(result.json).toMatchObject({
       error: {
-        code: "VALIDATION_ERROR"
+        code: "MODEL_VALIDATION_ERROR"
       }
     });
     await expectModel(workspace.modelPath, {
@@ -325,7 +325,7 @@ describe("write commands", () => {
     expect(result.exitCode).toBe(5);
     expect(result.json).toMatchObject({
       error: {
-        code: "VALIDATION_ERROR"
+        code: "MODEL_VALIDATION_ERROR"
       }
     });
     await expectModel(workspace.modelPath, {

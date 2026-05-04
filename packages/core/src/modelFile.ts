@@ -112,7 +112,7 @@ export async function writeJsonFileAtomic(filePath: string, value: unknown, pret
   } catch (error) {
     await rm(temporaryPath, { force: true });
 
-    throw new RpError("WRITE_FAILED", `failed to write model file: ${filePath}`, {
+    throw new RpError("MODEL_WRITE_FAILED", `failed to write model file: ${filePath}`, {
       cause: error instanceof Error ? error.message : String(error)
     });
   }

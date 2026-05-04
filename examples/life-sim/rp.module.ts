@@ -1,4 +1,5 @@
 import { defineModule } from "@rp-cli/core";
+import {} from "@rp-cli/core";
 import { z } from "zod";
 
 // Memories are durable story facts the agent should be able to recall later.

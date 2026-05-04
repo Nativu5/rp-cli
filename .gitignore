@@ -12,3 +12,4 @@ tmp/
 # IDE
 .vscode/
 .claude/
+.docs/

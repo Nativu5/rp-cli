@@ -64,11 +64,11 @@ export function assertModuleCompatibility(meta: RpMeta, module: { name: string; 
   }
 }
 
-export function validateAuthorModel<TModel>(module: RpModule<TModel>, model: unknown): TModel {
+export function validateRoleModel<TModel>(module: RpModule<TModel>, model: unknown): TModel {
   const parsed = module.model.schema.safeParse(model);
 
   if (!parsed.success) {
-    throw new RpError("VALIDATION_ERROR", "model failed validation", {
+    throw new RpError("MODEL_VALIDATION_ERROR", "model failed validation", {
       issues: formatZodIssues(parsed.error.issues)
     });
   }
@@ -92,6 +92,6 @@ export function validateModelFile<TModel>(module: RpModule<TModel>, envelope: Rp
 
   return {
     rp: envelope.rp,
-    model: validateAuthorModel(module, envelope.model)
+    model: validateRoleModel(module, envelope.model)
   };
 }

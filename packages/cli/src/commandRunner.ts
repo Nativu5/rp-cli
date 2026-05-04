@@ -48,11 +48,11 @@ function exitCodeForError(error: unknown): number {
     return 3;
   }
 
-  if (isModelFileError(code)) {
+  if (isReadFileError(code)) {
     return 4;
   }
 
-  if (code === "VALIDATION_ERROR" || code.startsWith("MIGRATION_")) {
+  if (code === "MODEL_VALIDATION_ERROR" || code.startsWith("MIGRATION_")) {
     return 5;
   }
 
@@ -64,7 +64,12 @@ function exitCodeForError(error: unknown): number {
     return 7;
   }
 
-  if (code === "WRITE_FAILED" || code === "LOG_WRITE_FAILED" || code === "MODEL_LOCKED") {
+  if (
+    code === "MODEL_ALREADY_EXISTS" ||
+    code === "MODEL_WRITE_FAILED" ||
+    code === "LOG_WRITE_FAILED" ||
+    code === "MODEL_LOCKED"
+  ) {
     return 8;
   }
 
@@ -75,6 +80,12 @@ function isModuleError(code: RpErrorCode): boolean {
   return code === "MODULE_NOT_FOUND" || code === "MODULE_INVALID" || code === "MODULE_MODEL_MISMATCH";
 }
 
-function isModelFileError(code: RpErrorCode): boolean {
-  return code === "MODEL_NOT_FOUND" || code === "MODEL_INVALID_JSON" || code === "MODEL_ENVELOPE_INVALID";
+function isReadFileError(code: RpErrorCode): boolean {
+  return (
+    code === "MODEL_NOT_FOUND" ||
+    code === "MODEL_INVALID_JSON" ||
+    code === "MODEL_ENVELOPE_INVALID" ||
+    code === "LOG_READ_FAILED" ||
+    code === "LOG_INVALID_JSON"
+  );
 }

@@ -43,7 +43,7 @@ describe("model lifecycle CLI", () => {
     expect(result.exitCode).toBe(8);
     expect(result.json).toMatchObject({
       error: {
-        code: "WRITE_FAILED"
+        code: "MODEL_ALREADY_EXISTS"
       }
     });
     expect(JSON.parse(await readFile(workspace.modelPath, "utf8"))).toEqual({
@@ -141,12 +141,12 @@ describe("model lifecycle CLI", () => {
     expect(result.exitCode).toBe(5);
     expect(result.json).toMatchObject({
       error: {
-        code: "VALIDATION_ERROR"
+        code: "MODEL_VALIDATION_ERROR"
       }
     });
   });
 
-  it("outputs author model and raw envelope", async () => {
+  it("outputs role model and raw envelope", async () => {
     const workspace = await createWorkspace();
     await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "init"]);
 

@@ -31,7 +31,7 @@ export async function readJsonLogEntries(logPath: string): Promise<unknown[]> {
       return [];
     }
 
-    throw new RpError("MODEL_NOT_FOUND", `failed to read log file: ${logPath}`, {
+    throw new RpError("LOG_READ_FAILED", `failed to read log file: ${logPath}`, {
       cause: error instanceof Error ? error.message : String(error)
     });
   }
@@ -41,7 +41,7 @@ export async function readJsonLogEntries(logPath: string): Promise<unknown[]> {
   try {
     return lines.map((line) => JSON.parse(line));
   } catch (error) {
-    throw new RpError("MODEL_INVALID_JSON", `log file is not valid JSONL: ${logPath}`, {
+    throw new RpError("LOG_INVALID_JSON", `log file is not valid JSONL: ${logPath}`, {
       cause: error instanceof Error ? error.message : String(error)
     });
   }

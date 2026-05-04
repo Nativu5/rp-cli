@@ -95,7 +95,17 @@ describe("core runtime units", () => {
     await writeFile(logPath, '{"type":"update"}\nnot-json\n');
 
     await expect(readJsonLogEntries(logPath)).rejects.toMatchObject({
-      code: "MODEL_INVALID_JSON"
+      code: "LOG_INVALID_JSON"
+    });
+  });
+
+  it("reports log read failures separately from model file failures", async () => {
+    const cwd = await mkdtemp(path.join(tmpdir(), "rp-cli-core-log-"));
+    const logPath = path.join(cwd, "rp.model.json.log.jsonl");
+    await mkdir(logPath);
+
+    await expect(readJsonLogEntries(logPath)).rejects.toMatchObject({
+      code: "LOG_READ_FAILED"
     });
   });
 });

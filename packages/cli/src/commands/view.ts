@@ -6,7 +6,7 @@ import { writeJson } from "../output.js";
 export function registerViewCommand(program: Command): void {
   program
     .command("view")
-    .description("Run or list module views.")
+    .description("Run or list model views.")
     .argument("[name]", "view name")
     .option("--list", "list available views")
     .action(async (name: string | undefined, options: { list?: boolean }, command) => {

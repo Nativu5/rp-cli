@@ -6,7 +6,7 @@ import { writeJson } from "../output.js";
 export function registerModelCommand(program: Command): void {
   program
     .command("model")
-    .description("Output the author model.")
+    .description("Output the role model.")
     .option("--raw", "output the full model envelope")
     .option("--schema", "output the model JSON Schema")
     .action(async (options: { raw?: boolean; schema?: boolean }, command) => {

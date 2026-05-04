@@ -117,6 +117,27 @@ describe("operation logging", () => {
     });
   });
 
+  it("rejects invalid log limits with a log-specific input error", async () => {
+    const workspace = await createWorkspace();
+
+    const result = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--model",
+      workspace.modelPath,
+      "log",
+      "--limit",
+      "many"
+    ]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.json).toMatchObject({
+      error: {
+        code: "LOG_LIMIT_INVALID"
+      }
+    });
+  });
+
   it("does not append logs for dry-run writes", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);

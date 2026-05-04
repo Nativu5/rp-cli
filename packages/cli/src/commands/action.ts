@@ -12,7 +12,7 @@ import { writeJson } from "../output.js";
 export function registerActionCommand(program: Command): void {
   program
     .command("action")
-    .description("Run or list module actions.")
+    .description("Run an action (named update) or list all actions.")
     .argument("[name]", "action name")
     .argument("[input]", "action input JSON")
     .option("--list", "list available actions")

@@ -79,7 +79,7 @@ Read prompt-ready context:
 rp --module examples/life-sim/rp.module.ts --model mio.json view prompt
 ```
 
-Read raw author model:
+Read raw role model:
 
 ```bash
 rp --module examples/life-sim/rp.module.ts --model mio.json model
@@ -130,7 +130,7 @@ rp --module examples/life-sim/rp.module.ts --model mio.json \
   update '[{"op":"replace","path":"/mood/label","value":"calm"}]'
 ```
 
-Patch paths are relative to the author model root, so `/mood/label` means `model.mood.label`.
+Patch paths are relative to the role model root, so `/mood/label` means `model.mood.label`.
 
 ## Validation, Migration, And Logs
 
@@ -152,7 +152,7 @@ Read recent audit logs:
 rp --module examples/life-sim/rp.module.ts --model mio.json log --limit 5
 ```
 
-`--reason` is stored in the audit log, not in author model. This helps an agent or creator understand why a change happened without polluting the story model.
+`--reason` is stored in the audit log, not in role model. This helps an agent or creator understand why a change happened without polluting the story model.
 
 ## Shorter Agent Commands
 

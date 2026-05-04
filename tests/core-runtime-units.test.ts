@@ -2,7 +2,9 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { applyJsonPatch, findView, readJsonLogEntries, runView } from "@rp-cli/core/internal";
+import { readJsonLogEntries } from "../packages/core/src/log.js";
+import { applyJsonPatch } from "../packages/core/src/patch.js";
+import { findView, runView } from "../packages/core/src/view.js";
 
 describe("core runtime units", () => {
   it("selects default, brief, then the first view when no name is requested", () => {

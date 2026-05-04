@@ -718,14 +718,11 @@ MODEL_LOCKED
 Node.js
 TypeScript
 Zod
-cac 或 commander
-tsx 或 jiti
+Commander
 fast-json-patch
-zod-to-json-schema
+Zod JSON Schema export
 proper-lockfile
-nanoid
 vitest
-fs-extra
 ```
 
 ---

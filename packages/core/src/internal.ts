@@ -1,14 +1,17 @@
-export * from "./action.js";
-export * from "./errors.js";
-export * from "./log.js";
-export * from "./migration.js";
-export * from "./moduleLoader.js";
-export * from "./moduleParser.js";
-export * from "./patch.js";
-export * from "./schema.js";
-export * from "./modelFile.js";
-export * from "./modelLock.js";
-export * from "./modelAccess.js";
-export * from "./view.js";
-export * from "./types.js";
-export * from "./validation.js";
+export { RpError, toErrorShape } from "./errors.js";
+export type { RpErrorCode, RpErrorShape } from "./errors.js";
+export { resolveRpPaths } from "./modelFile.js";
+export {
+  applyUpdateOperation,
+  exportActionInputSchemaOperation,
+  initModelOperation,
+  listActionSummariesOperation,
+  listViewsOperation,
+  migrateModelOperation,
+  readLogOperation,
+  readModelOperation,
+  runActionOperation,
+  runViewOperation,
+  validateModelOperation
+} from "./runtime.js";
+export type { JsonPatch, RpMeta, RpModelFile, RpPaths } from "./types.js";

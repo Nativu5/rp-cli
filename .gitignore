@@ -1,9 +1,11 @@
 node_modules/
 dist/
 coverage/
+tmp/
+
 *.log
 *.log.jsonl
-*.state.json
+*.model.json
 *.lock
 .DS_Store
 

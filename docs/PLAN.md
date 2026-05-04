@@ -1808,14 +1808,11 @@ log append 不要求和 model file write 一起提交或回滚。
 TypeScript
 Node.js
 Zod
-cac 或 commander
-tsx 或 jiti
+Commander
 fast-json-patch
-zod-to-json-schema
+Zod JSON Schema export
 proper-lockfile
-nanoid
 vitest
-fs-extra
 ```
 
 建议包结构：
@@ -1843,9 +1840,10 @@ rp-cli/
 │   │   │   ├── patch.ts
 │   │   │   ├── action.ts
 │   │   │   ├── view.ts
-│   │   │   ├── schema.ts
+│   │   │   ├── runtime.ts
 │   │   │   ├── log.ts
 │   │   │   ├── errors.ts
+│   │   │   ├── internal.ts
 │   │   │   └── index.ts
 │   │   └── package.json
 │   │
@@ -1857,19 +1855,15 @@ rp-cli/
 │       │   │   ├── validate.ts
 │       │   │   ├── migrate.ts
 │       │   │   ├── model.ts
-│       │   │   ├── patch.ts
+│       │   │   ├── update.ts
 │       │   │   ├── action.ts
 │       │   │   ├── view.ts
-│       │   │   ├── schema.ts
 │       │   │   └── log.ts
 │       │   └── output.ts
 │       └── package.json
 │
 ├── examples/
-│   ├── life-sim/
-│   │   ├── rp.module.ts
-│   │   └── README.md
-│   └── dungeon/
+│   └── life-sim/
 │       ├── rp.module.ts
 │       └── README.md
 │

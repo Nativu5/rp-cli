@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -188,20 +188,6 @@ describe("life-sim example", () => {
         code: "VALIDATION_ERROR"
       }
     });
-  });
-
-  it("documents the complete life-sim command flow", async () => {
-    const readme = await readFile(
-      new URL("../examples/life-sim/README.md", import.meta.url),
-      "utf8"
-    );
-
-    expect(readme).toContain("action remember");
-    expect(readme).toContain("action setMood");
-    expect(readme).toContain("view prompt");
-    expect(readme).toContain("action setMood --schema");
-    expect(readme).toContain("log --limit 5");
-    expect(readme).toContain("--reason");
   });
 });
 

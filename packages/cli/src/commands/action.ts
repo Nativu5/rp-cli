@@ -1,21 +1,9 @@
 import type { Command } from "commander";
 import {
-  appendJsonLogEntry,
-  applyJsonPatch,
-  createRuntimeContext,
-  exportActionInputSchema,
-  findAction,
-  hashModel,
-  loadModule,
-  readModelFile,
+  exportActionInputSchemaOperation,
+  listActionSummariesOperation,
   RpError,
-  runAction,
-  updateModelEnvelope,
-  validateActionInput,
-  validateAuthorModel,
-  validateModelFile,
-  withModelLock,
-  writeJsonFileAtomic
+  runActionOperation
 } from "@rp-cli/core/internal";
 import { readJsonInput } from "../jsonInput.js";
 import { runCommand } from "../commandRunner.js";
@@ -38,10 +26,8 @@ export function registerActionCommand(program: Command): void {
         command
       ) => {
         await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
-          const module = await loadModule(paths.modulePath);
-
           if (options.list) {
-            writeJson(listActions(module.actions), pretty);
+            writeJson(await listActionSummariesOperation({ paths }), pretty);
             return;
           }
 
@@ -49,87 +35,28 @@ export function registerActionCommand(program: Command): void {
             throw new RpError("ACTION_NOT_FOUND", "action name is required");
           }
 
-          const action = findAction(module.actions, name);
-
           if (options.schema) {
-            writeJson(exportActionInputSchema(action), pretty);
+            writeJson(await exportActionInputSchemaOperation({ paths, name }), pretty);
             return;
           }
 
-          const inputJson = await readJsonInput({
+          const actionInput = await readJsonInput({
             inline: inputArgument,
             filePath: options.file,
             errorCode: "ACTION_INPUT_INVALID",
             description: "action input"
           });
-          const input = validateActionInput(action, inputJson);
-
-          await withModelLock(paths, async () => {
-            const envelope = validateModelFile(module, await readModelFile(paths.modelPath));
-            const ctx = createRuntimeContext();
-            const result = await runAction({
-              action,
-              model: envelope.model,
-              input,
-              meta: envelope.rp,
-              ctx
-            });
-
-            if (result.patch.length === 0) {
-              writeJson(
-                {
-                  result: null,
-                  ...(result.message === undefined ? {} : { message: result.message })
-                },
-                pretty
-              );
-              return;
-            }
-
-            const nextModel = validateAuthorModel(
-              module,
-              applyJsonPatch(envelope.model, result.patch)
-            );
-            const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
-
-            if (!dryRun) {
-              await writeJsonFileAtomic(paths.modelPath, nextEnvelope);
-              await appendJsonLogEntry(paths.logPath, {
-                id: ctx.id("log"),
-                time: ctx.now(),
-                type: "action",
-                name,
-                ...(reason === undefined ? {} : { reason }),
-                ...(result.reason === undefined ? {} : { actionReason: result.reason }),
-                ...(result.message === undefined ? {} : { message: result.message }),
-                input,
-                patch: result.patch,
-                modelHashBefore: hashModel(envelope.model),
-                modelHashAfter: hashModel(nextModel)
-              });
-            }
-
-            writeJson(
-              {
-                result: {
-                  patch: result.patch,
-                  model: nextModel
-                },
-                ...(result.message === undefined ? {} : { message: result.message })
-              },
-              pretty
-            );
-          });
+          writeJson(
+            await runActionOperation({
+              paths,
+              name,
+              actionInput,
+              dryRun,
+              reason
+            }),
+            pretty
+          );
         });
       }
     );
-}
-
-function listActions(
-  actions: Parameters<typeof findAction>[0]
-): { name: string; description: string }[] {
-  return Object.entries(actions ?? {}).map(([name, action]) => ({
-    name,
-    description: action.description
-  }));
 }

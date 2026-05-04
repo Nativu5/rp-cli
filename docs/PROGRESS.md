@@ -89,7 +89,7 @@ The repository has clear file targets for the next implementation phase
 
 ## Current Next Step
 
-All planned MVP phases are complete; current next step is remaining P1 release-readiness hardening.
+All planned MVP phases are complete; current next step is remaining P1 release-readiness hardening. CLI/runtime boundary cleanup is complete.
 
 ## Release-Readiness Hardening
 
@@ -103,6 +103,9 @@ All planned MVP phases are complete; current next step is remaining P1 release-r
 - [ ] P1: Add dist/bin package smoke tests and CI.
 - [ ] P1: Add project config / upward discovery.
 - [ ] P1: Add user-facing lock diagnostics and configurable lock timing.
+- [x] P1: Move CLI write/read orchestration into core runtime operations.
+- [x] P1: Narrow `@rp-cli/core/internal` from a broad helper barrel to an explicit CLI runtime surface.
+- [x] P1: Remove standalone `schema.ts`; model/action schema queries are implemented by runtime operations.
 
 ## Model/View/Action/Update Refactor
 
@@ -142,7 +145,9 @@ Not changed:
 ## Architecture Notes
 
 - `@rp-cli/core` is the public creator API. It should expose `defineModule` and creator-facing types only.
-- `@rp-cli/core/internal` is the CLI/runtime API. It exposes module loading, module parsing, model file helpers, validation, logging, schema export, action, view, patch, and migration helpers.
+- `@rp-cli/core/internal` is the CLI/runtime API. It should expose runtime operations, `RpError`/error formatting, path resolution, and required types only.
+- Low-level helpers such as module loading, model file IO, locks, validation, patch application, action/view execution, migration, logging, and JSON Schema export stay behind `packages/core/src/runtime.ts`.
+- CLI command files should parse command options and JSON input, call runtime operations, and write JSON output; they should not directly assemble model write transactions.
 - Unknown module exports must be parsed with `parseModule(value: unknown)` instead of casting at the call site.
 - Runtime module loading currently supports `.ts`, `.mts`, `.js`, `.mjs`, and `.cjs` module files on Node `>=24.0.0`.
 - Model files are bound to module identity via `rp.module`; schema evolution remains driven by `rp.schemaVersion`.

@@ -40,7 +40,7 @@ Node.js + TypeScript + Zod + Commander + fast-json-patch
 │   │       ├── moduleLoader.ts
 │   │       ├── moduleParser.ts
 │   │       ├── patch.ts
-│   │       ├── schema.ts
+│   │       ├── runtime.ts
 │   │       ├── modelFile.ts
 │   │       ├── modelLock.ts
 │   │       ├── modelAccess.ts
@@ -64,9 +64,16 @@ Node.js + TypeScript + Zod + Commander + fast-json-patch
 │               ├── view.ts
 │               └── validate.ts
 └── tests/
+    ├── architecture-contract.test.ts
+    ├── core-runtime-units.test.ts
+    ├── creator-experience.test.ts
+    ├── discovery-read-apis.test.ts
+    ├── life-sim-example.test.ts
+    ├── logging.test.ts
+    ├── migration.test.ts
+    ├── runtime-foundations.test.ts
     ├── state-lifecycle.test.ts
-    ├── scaffold.test.ts
-    └── runtime-foundations.test.ts
+    └── write-commands.test.ts
 ```
 
 ## 模块说明
@@ -88,10 +95,10 @@ import { defineModule } from "@rp-cli/core";
 
 ### `@rp-cli/core/internal`
 
-CLI 和 runtime 内部 API。`packages/cli` 应从这里导入内部能力，例如：
+CLI runtime 内部 API。`packages/cli` 应只从这里导入 runtime operation、错误类型、路径解析和必要类型，例如：
 
 ```ts
-import { loadModule, readModelFile } from "@rp-cli/core/internal";
+import { runActionOperation, readModelOperation } from "@rp-cli/core/internal";
 ```
 
 核心运行时包，负责：
@@ -109,10 +116,10 @@ import { loadModule, readModelFile } from "@rp-cli/core/internal";
 - `action.ts`: 查找 action 并校验 action 返回值基础结构。
 - `view.ts`: 按 default/brief/第一个 view 的规则查找 view。
 - `migration.ts`: 校验迁移前置条件。
-- `schema.ts`: 导出 Zod schema 对应的 JSON Schema。
+- `runtime.ts`: 组合 CLI runtime operations，统一编排 module loading、model 读写、lock、validation、action/update/migration/view 执行、JSON Schema 查询和 audit log。
 - `log.ts`: 提供 model hash 工具。
 - `index.ts`: 统一导出 public creator API。
-- `internal.ts`: 统一导出 runtime internal API。
+- `internal.ts`: 显式导出 CLI 可用的 runtime operation surface；不要重新变回全量 barrel export。
 
 ### `@rp-cli/cli`
 
@@ -141,14 +148,16 @@ import { loadModule, readModelFile } from "@rp-cli/core/internal";
 - `model.defaults`。
 - `model.migrate`。
 - `remember` action。
-- `default` view。
+- `setMood` action。
+- `default` 和 `prompt` view。
 
 ### `tests`
 
 测试入口：
 
-- `scaffold.test.ts`: 验证 workspace/CLI 命令注册和 public API 边界。
-- `runtime-foundations.test.ts`: 验证 core runtime foundation、module loading、envelope 校验和 schema 导出。
+- `architecture-contract.test.ts`: 验证 creator public API、CLI runtime internal API 和 CLI command import 边界。
+- `creator-experience.test.ts`: 从创作者视角验证只依赖 public API 编写模块，并通过 CLI 完成 init/action/schema/view/validate 流程。
+- `runtime-foundations.test.ts`: 验证 core runtime foundation、module loading、envelope 校验和 runtime schema 查询。
 - `state-lifecycle.test.ts`: 验证 `init`、`validate`、`model`、原子写入和 lock 行为。
 - `write-commands.test.ts`: 验证 `update`、`action`、dry-run、input/return 校验和 model mutation 防护。
 - `migration.test.ts`: 验证 migration、schemaVersion 行为和跨 module 拒绝。

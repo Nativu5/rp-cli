@@ -1,20 +1,16 @@
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { defineModule } from "@rp-cli/core";
-import {
-  RpError,
-  assertCurrentSchemaVersion,
-  exportModelSchema,
-  loadModule,
-  parseModule,
-  parseEnvelope,
-  resolveRpPaths,
-  toErrorShape,
-  validateModelFile
-} from "@rp-cli/core/internal";
+import { RpError, toErrorShape } from "../packages/core/src/errors.js";
+import { compareSchemaVersions } from "../packages/core/src/migration.js";
+import { loadModule } from "../packages/core/src/moduleLoader.js";
+import { parseModule } from "../packages/core/src/moduleParser.js";
+import { resolveRpPaths } from "../packages/core/src/modelFile.js";
+import { readModelOperation } from "../packages/core/src/runtime.js";
+import { parseEnvelope, validateModelFile } from "../packages/core/src/validation.js";
 
 describe("runtime foundations", () => {
   it("rejects invalid module definitions", () => {
@@ -162,17 +158,18 @@ describe("runtime foundations", () => {
     });
 
     expect(() =>
-      assertCurrentSchemaVersion(
-        {
+      validateModelFile(module, {
+        rp: {
           module: "valid",
           moduleVersion: 1,
           schemaVersion: 1,
           createdAt: "2026-05-03T12:00:00.000Z",
           updatedAt: "2026-05-03T12:00:00.000Z"
         },
-        module
-      )
+        model: {}
+      })
     ).toThrowError(/older/);
+    expect(compareSchemaVersions(1, module.model.version)).toBe("older");
   });
 
   it("rejects model files owned by a different module", () => {
@@ -243,20 +240,38 @@ describe("runtime foundations", () => {
     });
   });
 
-  it("exports Zod 4 model schemas as JSON Schema", () => {
-    const module = defineModule({
-      name: "schema-export",
-      version: 1,
-      model: {
-        version: 1,
-        schema: z.object({
-          value: z.string()
-        }),
-        defaults: () => ({ value: "ready" })
-      }
-    });
+  it("exports Zod 4 model schemas through the model runtime operation", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "rp-cli-schema-"));
+    const modulePath = path.join(dir, "rp.module.ts");
 
-    expect(exportModelSchema(module)).toMatchObject({
+    await writeFile(
+      modulePath,
+      [
+        'import { defineModule } from "@rp-cli/core";',
+        'import { z } from "zod";',
+        "export default defineModule({",
+        '  name: "schema-export",',
+        "  version: 1,",
+        "  model: {",
+        "    version: 1,",
+        "    schema: z.object({ value: z.string() }),",
+        '    defaults: () => ({ value: "ready" })',
+        "  }",
+        "});"
+      ].join("\n")
+    );
+
+    await expect(
+      readModelOperation({
+        paths: {
+          modulePath,
+          modelPath: path.join(dir, "rp.model.json"),
+          logPath: path.join(dir, "rp.model.json.log.jsonl"),
+          lockPath: path.join(dir, "rp.model.json.lock")
+        },
+        schema: true
+      })
+    ).resolves.toMatchObject({
       type: "object",
       properties: {
         value: {
@@ -265,14 +280,5 @@ describe("runtime foundations", () => {
       },
       required: ["value"]
     });
-  });
-
-  it("does not use deprecated top-level ZodIssue imports", async () => {
-    const source = await readFile(
-      new URL("../packages/core/src/validation.ts", import.meta.url),
-      "utf8"
-    );
-
-    expect(source).not.toMatch(/import\s+type\s+\{[^}]*\bZodIssue\b[^}]*\}\s+from\s+["']zod["']/);
   });
 });

@@ -28,9 +28,9 @@ npx rp \
   action setMood '{"label":"calm","valence":0.45}'
 ```
 
-Node.js `>=24.0.0` is required. Local modules may be `.ts`, `.mts`, `.js`, `.mjs`, or `.cjs`.
+Node.js `>=20.0.0` is required. Creators should prefer `.js` or `.mjs` modules for the widest compatibility. Local `.ts` and `.mts` modules are also supported when running on Node.js `>=24.0.0`.
 
-By default, `rp` looks for `./rp.module.ts` and `./rp.model.json`. You can also pass `--module` / `--model`, or set `RP_MODULE` / `RP_MODEL`.
+By default, `rp` looks for `./rp.module.ts` and `./rp.module.js` next to `./rp.model.json`. You can also pass `--module` / `--model`, or set `RP_MODULE` / `RP_MODEL`.
 
 ## Repository Guide
 

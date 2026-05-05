@@ -28,9 +28,9 @@ npx rp \
   action setMood '{"label":"calm","valence":0.45}'
 ```
 
-运行时需要 Node.js `>=24.0.0`。本地 module 支持 `.ts`、`.mts`、`.js`、`.mjs` 和 `.cjs`。
+运行时需要 Node.js `>=20.0.0`。推荐创作者优先使用 `.js` 或 `.mjs` module，以获得更好的兼容性。本地 `.ts` 和 `.mts` module 也支持，但直接加载需要 Node.js `>=24.0.0`。
 
-默认情况下，`rp` 会寻找 `./rp.module.ts` 和 `./rp.model.json`。也可以传入 `--module` / `--model`，或设置 `RP_MODULE` / `RP_MODEL`。
+默认情况下，`rp` 会在 `./rp.model.json` 旁寻找 `./rp.module.ts` 和 `./rp.module.js`。也可以传入 `--module` / `--model`，或设置 `RP_MODULE` / `RP_MODEL`。
 
 ## 仓库导览
 

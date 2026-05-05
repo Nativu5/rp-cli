@@ -6,6 +6,7 @@ tmp/
 *.log
 *.log.jsonl
 *.model.json
+!examples/life-sim/**/rp.model.json
 *.lock
 .DS_Store
 

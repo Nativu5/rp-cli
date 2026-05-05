@@ -1,0 +1,28 @@
+{
+  "name": "@rp-cli/example-life-sim",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A life simulation roleplay example for rp-cli.",
+  "keywords": [
+    "rp-cli",
+    "roleplay",
+    "ai-agent"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@rp-cli/core": "file:../../packages/core",
+    "zod": "^4.4.2"
+  },
+  "devDependencies": {
+    "@rp-cli/cli": "file:../../packages/cli"
+  },
+  "scripts": {
+    "play:mio": "cd mio && rp view prompt",
+    "play:yuki": "cd yuki && rp view prompt",
+    "validate:mio": "cd mio && rp validate",
+    "validate:yuki": "cd yuki && rp validate"
+  }
+}

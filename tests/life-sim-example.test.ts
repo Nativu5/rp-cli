@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createProgram } from "../packages/cli/src/cli.js";
 
 const originalExitCode = process.exitCode;
-const lifeSimModulePath = path.resolve("examples/life-sim/src/rp.module.ts");
+const lifeSimModulePath = path.resolve("examples/life-sim/src/rp.module.js");
 
 afterEach(() => {
   process.exitCode = originalExitCode;

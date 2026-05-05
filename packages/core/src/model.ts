@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -14,12 +15,21 @@ const lockfile = require("proper-lockfile") as typeof ProperLockfile;
 // Path resolution
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_MODULE_PATH = "./rp.module.ts";
+export const DEFAULT_TYPESCRIPT_MODULE_PATH = "./rp.module.ts";
+export const DEFAULT_JAVASCRIPT_MODULE_PATH = "./rp.module.js";
 export const DEFAULT_MODEL_PATH = "./rp.model.json";
 
-export function resolveRpPaths(options: { modulePath?: string; modelPath?: string; cwd?: string }): RpPaths {
+export function resolveRpPaths(options: {
+  modulePath?: string;
+  modelPath?: string;
+  cwd?: string;
+  nodeVersion?: string;
+}): RpPaths {
   const cwd = options.cwd ?? process.cwd();
-  const modulePath = path.resolve(cwd, options.modulePath ?? process.env.RP_MODULE ?? DEFAULT_MODULE_PATH);
+  const modulePath = path.resolve(
+    cwd,
+    options.modulePath ?? process.env.RP_MODULE ?? resolveDefaultModulePath(cwd, options.nodeVersion)
+  );
   const modelPath = path.resolve(cwd, options.modelPath ?? process.env.RP_MODEL ?? DEFAULT_MODEL_PATH);
 
   return {
@@ -28,6 +38,24 @@ export function resolveRpPaths(options: { modulePath?: string; modelPath?: strin
     logPath: `${modelPath}.log.jsonl`,
     lockPath: `${modelPath}.lock`
   };
+}
+
+function resolveDefaultModulePath(cwd: string, nodeVersion = process.versions.node): string {
+  if (canLoadTypeScriptModules(nodeVersion)) {
+    const typescriptModulePath = path.resolve(cwd, DEFAULT_TYPESCRIPT_MODULE_PATH);
+
+    if (existsSync(typescriptModulePath)) {
+      return DEFAULT_TYPESCRIPT_MODULE_PATH;
+    }
+  }
+
+  return DEFAULT_JAVASCRIPT_MODULE_PATH;
+}
+
+function canLoadTypeScriptModules(nodeVersion: string): boolean {
+  const major = Number(nodeVersion.split(".")[0]);
+
+  return Number.isInteger(major) && major >= 24;
 }
 
 // ---------------------------------------------------------------------------

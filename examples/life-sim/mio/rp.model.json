@@ -1,0 +1,16 @@
+{
+  "rp": {
+    "module": "life-sim",
+    "moduleVersion": 1,
+    "schemaVersion": 1,
+    "createdAt": "2026-05-04T18:06:16.439Z",
+    "updatedAt": "2026-05-04T18:06:16.439Z"
+  },
+  "model": {
+    "profile": {},
+    "mood": {},
+    "relationships": {},
+    "level": 1,
+    "wear": {}
+  }
+}

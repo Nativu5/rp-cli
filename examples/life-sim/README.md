@@ -22,23 +22,28 @@ Without a model runtime, those facts tend to drift or disappear inside chat hist
 
 ## Design Philosophy
 
-RP CLI leverages Linux's filesystem concept: **each directory represents a character**. When you operate inside a character's directory, the default `rp.module.ts` and `rp.model.json` paths are enough.
+RP CLI leverages Linux's filesystem concept: **each directory represents a character**. When you operate inside a character's directory, the default module and model paths are enough.
 
 ```
 examples/life-sim/
+├── package.json          # ESM package boundary for Node.js
 ├── src/
-│   └── rp.module.ts     # Shared module source
+│   └── rp.module.js     # Shared module source
 ├── mio/                  # Mio's directory
-│   └── rp.module.ts@     # symlink -> src/rp.module.ts
+│   ├── rp.module.js@     # symlink -> ../src/rp.module.js
 │   └── rp.model.json     # Mio's generated state
-└── yuki/                 # Yuki's directory
-    └── rp.module.ts@     # symlink -> src/rp.module.ts
-    └── rp.model.json     # Yuki's generated state
+├── yuki/                 # Yuki's directory
+│   ├── rp.module.js@     # symlink -> ../src/rp.module.js
+│   └── rp.model.json     # Yuki's generated state
 ```
+
+The local `package.json` declares `"type": "module"` so Node.js loads `rp.module.js` as ESM. JavaScript is the recommended authoring format for Node.js 20 compatibility. RP CLI's default discovery also checks `rp.module.ts` and prefers it when it exists and the current Node.js version can load TypeScript directly.
+
+Templates and save archives are intentionally left to game packages or users; they can copy a character directory when they want that workflow.
 
 ## Creator View
 
-The creator owns `src/rp.module.ts`.
+The creator owns `src/rp.module.js`.
 
 In this example, the creator maps story design into model areas:
 
@@ -67,7 +72,7 @@ That split is the key creative benefit: creators decide what belongs in canon, w
 
 ## Agent / User View
 
-The user or agent does not edit `rp.module.ts`. It uses the `rp` CLI.
+The user or agent does not edit `rp.module.js`. It uses the `rp` CLI.
 
 Each character lives in its own directory. Operating from within a character's directory means the default paths can be used:
 
@@ -164,13 +169,13 @@ You can target a specific character's directory without changing your working di
 
 ```bash
 # Option 1. Export environment variables in advance
-export RP_MODULE=examples/life-sim/mio/rp.module.ts
+export RP_MODULE=examples/life-sim/mio/rp.module.js
 export RP_MODEL=examples/life-sim/mio/rp.model.json
 
 # Option 2. Use flags on each command
-rp --module examples/life-sim/mio/rp.module.ts --model examples/life-sim/mio/rp.model.json \
+rp --module examples/life-sim/mio/rp.module.js --model examples/life-sim/mio/rp.model.json \
   action setMood '{"label":"sleepy"}'
-rp --module examples/life-sim/yuki/rp.module.ts --model examples/life-sim/yuki/rp.model.json \
+rp --module examples/life-sim/yuki/rp.module.js --model examples/life-sim/yuki/rp.model.json \
   action setMood '{"label":"energetic"}'
 ```
 

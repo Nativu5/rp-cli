@@ -1,7 +1,7 @@
 ---
 name: rp-cli-creator
 description: |
-  For creators designing and building RP CLI modules. Use this when defining roleplay model schemas with Zod, creating semantic actions, designing read-only views, writing migration functions, or structuring a module with defineModule. Trigger whenever the user mentions creating an rp.module.ts, designing character models, defining actions like remember/setMood, writing views for prompts, or building a world model for AI agents. This skill is for the CREATOR side — the person who encodes the world rules and exposes them as a module.
+  For creators designing and building RP CLI modules. Use this when defining roleplay model schemas with Zod, creating semantic actions, designing read-only views, writing migration functions, or structuring a module with defineModule. Trigger whenever the user mentions creating an rp.module.js or rp.module.ts, designing character models, defining actions like remember/setMood, writing views for prompts, or building a world model for AI agents. This skill is for the CREATOR side — the person who encodes the world rules and exposes them as a module.
 ---
 
 # RP CLI Creator Skill
@@ -39,9 +39,9 @@ The `rp.model.json` file on disk is the **authoritative Model**. Views read from
 
 ## Module Structure
 
-A module is a TypeScript file (default: `rp.module.ts`) that exports `defineModule` from `@rp-cli/core`.
+A module is a JavaScript or TypeScript file that exports `defineModule` from `@rp-cli/core`. Default discovery checks `rp.module.ts` and `rp.module.js`; it prefers TypeScript when the file exists and the current Node.js version can load it directly. Prefer `.js` or `.mjs` for Node.js 20 compatibility. Direct `.ts` or `.mts` module loading requires Node.js 24 or newer.
 
-```typescript
+```javascript
 import { defineModule } from "@rp-cli/core";
 import { z } from "zod";
 
@@ -88,7 +88,7 @@ The model schema defines everything that persists between agent turns. Think abo
 - Use `.optional()` for nullable fields
 - Use `.catchall(z.unknown())` for extensibility
 
-```typescript
+```javascript
 const ModelSchema = z.object({
   profile: z
     .object({
@@ -124,7 +124,7 @@ Actions are the **only** way agents should modify state (besides the JSON Patch 
 
 ### Action Anatomy
 
-```typescript
+```javascript
 actions: {
   remember: {
     description: "Add a long-term memory.",
@@ -184,7 +184,7 @@ actions: {
 
 Views are **read-only** functions that compress model data into useful context. Agents call views before generating responses to understand the current situation.
 
-```typescript
+```javascript
 views: {
   default({ model }) {
     return {
@@ -215,7 +215,7 @@ views: {
 
 When your schema changes, existing model files need to be migrated. The migrate function transforms old model data to match the new schema.
 
-```typescript
+```javascript
 model: {
   version: 2,  // increment when schema changes
   schema: NewModelSchema,
@@ -267,13 +267,14 @@ For projects with multiple characters, organize like the life-sim example:
 
 ```
 my-module/
+├── package.json          # Contains "type": "module"
 ├── src/
-│   └── rp.module.ts      # Shared module definition
+│   └── rp.module.js      # Shared module definition
 ├── character1/
-│   ├── rp.module.ts@     # symlink -> ../src/rp.module.ts
+│   ├── rp.module.js@     # symlink -> ../src/rp.module.js
 │   └── rp.model.json     # Character state
 └── character2/
-    ├── rp.module.ts@
+    ├── rp.module.js@
     └── rp.model.json
 ```
 
@@ -322,7 +323,7 @@ rp action <name> --schema  # What inputs an action expects
 
 ## Example: A Minimal But Complete Module
 
-```typescript
+```javascript
 import { defineModule } from "@rp-cli/core";
 import { z } from "zod";
 

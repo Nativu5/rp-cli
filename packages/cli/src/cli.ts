@@ -23,7 +23,7 @@ export function createProgram(): Command {
     .name("rp")
     .description("Roleplaying CLI based on Zod and Model-View-Update pattern")
     .version(pkg.version)
-    .option("--module <path>", 'module file path ("rp.module.ts")')
+    .option("--module <path>", 'module file path ("rp.module.ts" or "rp.module.js")')
     .option("--model <path>", 'model file path ("rp.model.json")')
     .option("--pretty", "pretty-print JSON output")
     .option("--dry-run", "preview commands without persisting")

@@ -230,6 +230,76 @@ describe("runtime foundations", () => {
     }
   });
 
+  it("prefers the TypeScript default module when the current Node version can load it", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "rp-cli-paths-"));
+    await writeFile(path.join(dir, "rp.module.ts"), "export default {};\n");
+    await writeFile(path.join(dir, "rp.module.js"), "export default {};\n");
+
+    const paths = resolveRpPaths({
+      cwd: dir,
+      nodeVersion: "24.0.0"
+    });
+
+    expect(paths.modulePath).toBe(path.join(dir, "rp.module.ts"));
+    expect(paths.modelPath).toBe(path.join(dir, "rp.model.json"));
+  });
+
+  it("uses the JavaScript default module when TypeScript loading is not supported", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "rp-cli-paths-"));
+    await writeFile(path.join(dir, "rp.module.ts"), "export default {};\n");
+    await writeFile(path.join(dir, "rp.module.js"), "export default {};\n");
+
+    const paths = resolveRpPaths({
+      cwd: dir,
+      nodeVersion: "20.0.0"
+    });
+
+    expect(paths.modulePath).toBe(path.join(dir, "rp.module.js"));
+    expect(paths.modelPath).toBe(path.join(dir, "rp.model.json"));
+  });
+
+  it("uses the JavaScript default module when it is the only default module file", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "rp-cli-paths-"));
+    await writeFile(path.join(dir, "rp.module.js"), "export default {};\n");
+
+    const paths = resolveRpPaths({
+      cwd: dir,
+      nodeVersion: "24.0.0"
+    });
+
+    expect(paths.modulePath).toBe(path.join(dir, "rp.module.js"));
+    expect(paths.modelPath).toBe(path.join(dir, "rp.model.json"));
+  });
+
+  it("falls back to the JavaScript default module path when no default module file exists on Node 20", () => {
+    const previousModule = process.env.RP_MODULE;
+    const previousModel = process.env.RP_MODEL;
+    delete process.env.RP_MODULE;
+    delete process.env.RP_MODEL;
+
+    try {
+      const paths = resolveRpPaths({
+        cwd: "/tmp/rp-cli-test",
+        nodeVersion: "20.0.0"
+      });
+
+      expect(paths.modulePath).toBe("/tmp/rp-cli-test/rp.module.js");
+      expect(paths.modelPath).toBe("/tmp/rp-cli-test/rp.model.json");
+    } finally {
+      if (previousModule === undefined) {
+        delete process.env.RP_MODULE;
+      } else {
+        process.env.RP_MODULE = previousModule;
+      }
+
+      if (previousModel === undefined) {
+        delete process.env.RP_MODEL;
+      } else {
+        process.env.RP_MODEL = previousModel;
+      }
+    }
+  });
+
   it("formats unknown errors with the requested fallback code", () => {
     expect(toErrorShape(new Error("boom"))).toEqual({
       error: {

@@ -146,18 +146,18 @@ RP CLI resolves module and model paths in this order:
 CLI arguments > environment variables > default paths
 ```
 
-| Source      | Module            | Model             |
-| ----------- | ----------------- | ----------------- |
-| CLI         | `--module <path>` | `--model <path>`  |
-| Environment | `RP_MODULE`       | `RP_MODEL`        |
-| Default     | `./rp.module.ts`  | `./rp.model.json` |
+| Source      | Module                                                                     | Model             |
+| ----------- | -------------------------------------------------------------------------- | ----------------- |
+| CLI         | `--module <path>`                                                          | `--model <path>`  |
+| Environment | `RP_MODULE`                                                                | `RP_MODEL`        |
+| Default     | `./rp.module.ts` when available on Node.js 24+, otherwise `./rp.module.js` | `./rp.model.json` |
 
 For working with a character in its own directory, set once:
 
 ```bash
 export RP_DIR=./characters/mio
 # or
-export RP_MODULE=./src/rp.module.ts
+export RP_MODULE=./src/rp.module.js
 export RP_MODEL=./characters/mio/rp.model.json
 
 # Now all commands are concise:
@@ -174,7 +174,7 @@ rp --dir characters/mio action setMood '{"label":"happy"}'
 rp --dir characters/yuki action setMood '{"label":"energetic"}'
 
 # Or use explicit paths
-rp --model characters/mio/rp.model.json --module src/rp.module.ts view
+rp --model characters/mio/rp.model.json --module src/rp.module.js view
 ```
 
 ## Model File Structure

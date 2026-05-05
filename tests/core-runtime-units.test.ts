@@ -2,32 +2,45 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { RpError } from "../packages/core/src/errors.js";
 import { readJsonLogEntries } from "../packages/core/src/log.js";
 import { applyJsonPatch } from "../packages/core/src/patch.js";
 import { findView, runView } from "../packages/core/src/view.js";
 
 describe("core runtime units", () => {
-  it("selects default, brief, then the first view when no name is requested", () => {
-    expect(
-      findView({
-        first: () => "first",
-        default: () => "default",
-        brief: () => "brief"
-      }).name
-    ).toBe("default");
+  it("requires a view name", () => {
+    let error: unknown;
 
+    try {
+      findView(
+        {
+          first: () => "first",
+          default: () => "default",
+          brief: () => "brief"
+        },
+        ""
+      );
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toBeInstanceOf(RpError);
+    expect(error).toMatchObject({
+      code: "VIEW_NOT_FOUND"
+    });
+  });
+
+  it("selects a named view", () => {
     expect(
-      findView({
-        first: () => "first",
-        brief: () => "brief"
-      }).name
+      findView(
+        {
+          first: () => "first",
+          default: () => "default",
+          brief: () => "brief"
+        },
+        "brief"
+      ).name
     ).toBe("brief");
-
-    expect(
-      findView({
-        first: () => "first"
-      }).name
-    ).toBe("first");
   });
 
   it("wraps view runtime failures", async () => {

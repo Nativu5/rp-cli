@@ -13,17 +13,17 @@ The design principle is MVU. The **Model** is the persisted `rp.model.json` file
 ## Quick Start
 
 ```bash
-# Install the CLI
-npm install
-npm run build
+# Install the CLI from npm
+npm install -g @rp-cli/cli
 
 # Open an example character
-cd examples/life-sim/mio
+git clone https://github.com/Nativu5/rp-cli.git
+cd rp-cli/examples/life-sim/mio
 
 # Try it out
-npx rp init
-npx rp view prompt
-npx rp \
+rp init
+rp view prompt
+rp \
   --reason "The scene shifted into a calmer beat." \
   action setMood '{"label":"calm","valence":0.45}'
 ```
@@ -39,3 +39,26 @@ By default, `rp` looks for `./rp.module.ts` and `./rp.module.js` next to `./rp.m
 - `examples/life-sim`: a example roleplay game setting.
 - `skills/rp-cli-creator`: skill for agents to help creators to design the game.
 - `skills/rp-cli-player`: skill for agents and human to play the game.
+
+## Development Guide
+
+```bash
+# Install workspace dependencies
+npm install
+
+# Build both packages
+npm run build
+
+# Typecheck, test, lint, and format-check
+npm run typecheck
+npm test
+npm run lint
+npm run format:check
+```
+
+For local CLI development, use the workspace binary after installing dependencies:
+
+```bash
+cd examples/life-sim/mio
+npx rp view prompt
+```

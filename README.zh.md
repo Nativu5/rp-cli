@@ -13,17 +13,19 @@ RP CLI 是一个面向 AI Agent 的角色扮演状态运行时。创作者用 Zo
 ## 快速开始
 
 ```bash
-# 安装 CLI
-npm install
-npm run build
+# 从 npm 安装全局 CLI
+npm install -g @rp-cli/cli
 
 # 打开一个示例角色
-cd examples/life-sim/mio
+git clone https://github.com/Nativu5/rp-cli.git
+cd rp-cli/examples/life-sim
+npm install
+cd mio
 
 # 试一试
-npx rp init
-npx rp view prompt
-npx rp \
+rp init
+rp view prompt
+rp \
   --reason "The scene shifted into a calmer beat." \
   action setMood '{"label":"calm","valence":0.45}'
 ```
@@ -39,3 +41,39 @@ npx rp \
 - `examples/life-sim`：示例 RPG 设定和实现。
 - `skills/rp-cli-creator`：面向创作者的 Agent 辅助设计 Skill。
 - `skills/rp-cli-player`：面向 Agent 和人类的游戏玩家 Skill。
+
+## 开发指南
+
+```bash
+# 安装 workspace 依赖
+npm install
+
+# 构建两个 package
+npm run build
+
+# 类型检查、测试、lint 和格式检查
+npm run typecheck
+npm test
+npm run lint
+npm run format:check
+```
+
+本仓库使用 npm workspaces：
+
+- `@rp-cli/core`：把创作者 API 和运行时内部能力构建到 `packages/core/dist`。
+- `@rp-cli/cli`：把全局 `rp` 命令构建到 `packages/cli/dist`。
+- `tsconfig.examples.json`：使用 `allowJs` 检查 JavaScript 示例。
+
+本地开发 CLI 时，安装依赖后可以使用 workspace binary：
+
+```bash
+cd examples/life-sim/mio
+npx rp view prompt
+```
+
+发布前建议检查打包内容：
+
+```bash
+npm pack -w @rp-cli/core --dry-run
+npm pack -w @rp-cli/cli --dry-run
+```

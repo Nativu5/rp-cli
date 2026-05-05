@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { listViewsOperation, runViewOperation } from "@rp-cli/core/internal";
+import { listViewsOperation, RpError, runViewOperation } from "@rp-cli/core/internal";
 import { runCommand } from "../commandRunner.js";
 import { writeJson } from "../output.js";
 
@@ -14,6 +14,10 @@ export function registerViewCommand(program: Command): void {
         if (options.list) {
           writeJson(await listViewsOperation({ paths }), pretty);
           return;
+        }
+
+        if (!name) {
+          throw new RpError("VIEW_NOT_FOUND", "view name is required");
         }
 
         writeJson(await runViewOperation({ paths, name }), pretty);

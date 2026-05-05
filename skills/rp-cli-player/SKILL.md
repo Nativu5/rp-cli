@@ -39,7 +39,7 @@ The key insight: you never read or write the model file directly. You **view** i
 ## Core Workflow
 
 ```
-1. Before a scene:   rp view prompt     # Get character context
+1. Before a scene:   rp view <name>     # Get character context
 2. After an event:   rp action <name>   # Record what happened
 3. When unsure:       rp action --list   # Discover available actions
 4. To audit:          rp log --limit 5  # See recent changes
@@ -281,7 +281,7 @@ Common error codes:
 
 | Task           | Command                                            |
 | -------------- | -------------------------------------------------- |
-| Get context    | `rp view prompt`                                   |
+| Get context    | `rp view <name>`                                   |
 | Record event   | `rp action <name> '<json>' --reason "..."`         |
 | Low-level edit | `rp update '<json-patch>' --reason "..."`          |
 | List actions   | `rp action --list`                                 |

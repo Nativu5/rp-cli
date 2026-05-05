@@ -187,7 +187,7 @@ export async function listViewsOperation(input: { paths: RpPaths }): Promise<{ n
   return listViews(module.views);
 }
 
-export async function runViewOperation(input: { paths: RpPaths; name?: string }): Promise<unknown> {
+export async function runViewOperation(input: { paths: RpPaths; name: string }): Promise<unknown> {
   const module = await loadModule(input.paths.modulePath);
   const view = findView(module.views, input.name);
   const envelope = validateModelFile(module, await readModelFile(input.paths.modelPath));

@@ -4,7 +4,7 @@ import type { RpMeta, RpView, RpViewFunction } from "./types.js";
 
 export function findView(
   views: Record<string, RpView> | undefined,
-  requestedName?: string
+  requestedName: string
 ): { name: string; run: RpViewFunction } {
   const entries = Object.entries(views ?? {});
 
@@ -12,8 +12,12 @@ export function findView(
     throw new RpError("VIEW_NOT_FOUND", "module does not define views");
   }
 
-  const name = requestedName ?? (views?.default ? "default" : views?.brief ? "brief" : entries[0]?.[0]);
-  const view = name ? views?.[name] : undefined;
+  if (!requestedName) {
+    throw new RpError("VIEW_NOT_FOUND", "view name is required");
+  }
+
+  const name = requestedName;
+  const view = views?.[name];
 
   if (!name || !view) {
     throw new RpError("VIEW_NOT_FOUND", `view not found: ${requestedName}`);

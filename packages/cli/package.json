@@ -1,6 +1,22 @@
 {
   "name": "@rp-cli/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Command-line tool for running RP CLI roleplay modules.",
+  "keywords": [
+    "rp-cli",
+    "roleplay",
+    "ai-agent"
+  ],
+  "license": "Apache-2.0",
+  "author": "Yongkun Li",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nativu5/rp-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nativu5/rp-cli/issues"
+  },
+  "homepage": "https://github.com/Nativu5/rp-cli#readme",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
@@ -22,7 +38,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@rp-cli/core": "0.0.0",
+    "@rp-cli/core": "^0.1.0",
     "commander": "^14.0.3",
     "zod": "^4.4.2"
   }

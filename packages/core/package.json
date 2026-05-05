@@ -1,6 +1,22 @@
 {
   "name": "@rp-cli/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Creator API and runtime internals for RP CLI roleplay modules.",
+  "keywords": [
+    "rp-cli",
+    "roleplay",
+    "ai-agent"
+  ],
+  "license": "Apache-2.0",
+  "author": "Yongkun Li",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nativu5/rp-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nativu5/rp-cli/issues"
+  },
+  "homepage": "https://github.com/Nativu5/rp-cli#readme",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"

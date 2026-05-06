@@ -1,6 +1,6 @@
 {
   "name": "@rp-cli/example-life-sim",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "A life simulation roleplay example for rp-cli.",

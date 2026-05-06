@@ -20,8 +20,8 @@
     "@rp-cli/cli": "file:../../packages/cli"
   },
   "scripts": {
-    "play:mio": "cd mio && rp view prompt",
-    "play:yuki": "cd yuki && rp view prompt",
+    "play:mio": "cd mio && rp view MioBackground",
+    "play:yuki": "cd yuki && rp view summary",
     "validate:mio": "cd mio && rp validate",
     "validate:yuki": "cd yuki && rp validate"
   }

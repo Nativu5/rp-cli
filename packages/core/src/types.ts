@@ -60,10 +60,7 @@ export type RpActionDefinitions<TModel, TActions> = {
   [TName in keyof TActions]: TActions[TName] extends AnyZodSchema ? RpActionDefinition<TModel, TActions[TName]> : never;
 };
 
-export type RpViewFunction<TModel = unknown> = (args: {
-  model: Readonly<TModel>;
-  meta: RpMeta;
-}) => MaybePromise<unknown>;
+export type RpViewFunction<TModel = unknown> = (args: { model: TModel; meta: RpMeta }) => MaybePromise<unknown>;
 
 export interface RpViewObject<TModel = unknown> {
   description?: string;

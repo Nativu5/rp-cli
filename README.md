@@ -3,12 +3,18 @@
 [中文](./README.zh.md)
 
 > Roleplaying CLI for AI agents based on Zod and Model-View-Update pattern.
->
-> 🚧 Still under active development...
 
 RP CLI is a small runtime for AI agents that need durable roleplay state. A creator describes a character or world with a Zod model and a few semantic operations; an agent then uses the `rp` command to read context, make intentional updates, and inspect why the model changed.
 
-The design principle is MVU. The **Model** is the persisted `rp.model.json` file: profile, mood, relationships, memories, inventory, or any state the creator chooses. **Views** are read-only projections that turn model into prompt-ready context. **Updates** are either named actions or explicit JSON Patch operations; the runtime validates the next model before writing it back. This keeps creative rules in the module while giving agents a stable tool interface.
+## Design Principles
+
+RP CLI follows Model-View-Update.
+
+- **Model** is the persisted `rp.model.json` file and can store character profiles, emotions, relationships, memories, items, or any other creator-defined state.
+- **View** usually combines the model into agent-friendly context. A creator can also intentionally mutate the model inside a View to express query side effects, such as recording that a piece of context has already been read.
+- **Update** is the normal write path, whether through named actions or explicit JSON Patch, and remains the recommended way to express intentional state changes.
+
+RP CLI keeps the creator-defined game rules inside the module and exposes a stable tool interface to the outside.
 
 ## Quick Start
 
@@ -22,7 +28,7 @@ cd rp-cli/examples/life-sim/mio
 
 # Try it out
 rp init
-rp view prompt
+rp view MioBackground
 rp \
   --reason "The scene shifted into a calmer beat." \
   action setMood '{"label":"calm","valence":0.45}'
@@ -60,5 +66,5 @@ For local CLI development, use the workspace binary after installing dependencie
 
 ```bash
 cd examples/life-sim/mio
-npx rp view prompt
+npx rp view MioBackground
 ```

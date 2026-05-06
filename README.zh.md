@@ -3,12 +3,18 @@
 [English](./README.md)
 
 > 面向 AI agents 的、基于 Zod 和 Model-View-Update 模式的命令行工具。
->
-> 🚧 正在积极开发中...
 
 RP CLI 是一个面向 AI Agent 的角色扮演状态运行时。创作者用 Zod 描述角色或世界模型，并定义少量语义化操作；Agent 则通过 `rp` 命令读取上下文、写入有意义的变化、迁移旧状态，并查看模型为什么发生改变。
 
-设计核心原则为 MVU。**Model** 是持久化的 `rp.model.json`，可以保存角色档案、情绪、关系、记忆、物品或任意状态。**View** 是只读投影，把完整信息组合成适合 agent 的上下文。**Update** 是命名 action 或显式 JSON Patch；运行时会在写回前验证新模型。创作规则留在 module 里，Agent 拿到的是稳定的工具接口。
+## 设计原则
+
+RP CLI 遵循 Model-View-Update。
+
+- **Model** 是持久化的 `rp.model.json`，可以保存角色档案、情绪、关系、记忆、物品或创作者定义的任意状态。
+- **View** 通常把模型组合成适合 Agent 的上下文。创作者也可以有意在 View 中修改模型来表达查询副作用，例如记录某段上下文已经被读取。
+- **Update** 是常规写入路径，可以是命名 action 或显式 JSON Patch，也仍然是表达有意状态变化的推荐方式。
+
+RP CLI 将创作者定义的“游戏规则”留在 module 的内部，并向外提供稳定的工具接口。
 
 ## 快速开始
 
@@ -24,7 +30,7 @@ cd mio
 
 # 试一试
 rp init
-rp view prompt
+rp view MioBackground
 rp \
   --reason "The scene shifted into a calmer beat." \
   action setMood '{"label":"calm","valence":0.45}'
@@ -68,7 +74,7 @@ npm run format:check
 
 ```bash
 cd examples/life-sim/mio
-npx rp view prompt
+npx rp view MioBackground
 ```
 
 发布前建议检查打包内容：

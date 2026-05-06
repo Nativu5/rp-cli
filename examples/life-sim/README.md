@@ -5,7 +5,7 @@ This example shows how a creator can use RP CLI to turn character and story desi
 The module is intentionally small. It is not a complete game engine. It demonstrates the core pattern:
 
 ```
-creator design -> Zod model schema -> semantic actions -> prompt views -> CLI usage by agents
+creator design -> Zod model schema -> semantic actions -> named context views -> CLI usage by agents
 ```
 
 ## The Creative Idea
@@ -16,7 +16,7 @@ Imagine a slice-of-life roleplay centered on Mio. The agent needs stable model c
 - how she currently feels
 - what she is wearing
 - how relationships are changing
-- which state is important enough to bring into future prompts
+- which state is important enough to bring into future context
 
 Without a model runtime, those facts tend to drift or disappear inside chat history. RP CLI gives the creator a place to make those facts explicit.
 
@@ -65,8 +65,9 @@ These actions are intentionally higher-level than raw JSON Patch. An agent can c
 
 The module also exposes views:
 
-- `default`: a general overview of character, mood, relationship count, level, and wear.
-- `prompt`: compact prompt-facing context for the next generated scene.
+- `summary`: a general overview of the current scene state: character, mood, relationship count, level, and wear.
+- `MioBackground`: a short Mio-focused background note for writing the next scene.
+- `MioMood`: Mio's current mood; when stress is missing or below `0.5`, the view normalizes it to a random value between `0.2` and `0.6` and lets the runtime persist that query side effect.
 
 That split is the key creative benefit: creators decide what belongs in canon, what operations are safe, and what context an agent should see.
 
@@ -96,8 +97,11 @@ rp action setWear '{"top":"blue blouse","bottom":"gray skirt","accessory":"silve
 # Remove an item
 rp action removeWear '{"slot":"accessory"}'
 
-# Read prompt context
-rp view prompt
+# Read Mio background context
+rp view MioBackground
+
+# Read Mio mood and allow its built-in query side effect
+rp view MioMood
 
 # Read raw model
 rp model
@@ -190,7 +194,7 @@ For creators, that means:
 - character canon can be modeled explicitly
 - scene-changing events can become named actions
 - numeric and complex state (like clothing) can be managed semantically
-- prompt context can be curated instead of copied manually
+- context views can be named after the domain information they return instead of copied manually
 - schema changes can be migrated
 - model changes can be audited with reasons
 

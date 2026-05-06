@@ -43,6 +43,14 @@ const ModelSchema = z.object({
     .default({})
 });
 
+function getCharacterName(model) {
+  return model.profile.name ?? "Mio";
+}
+
+function randomStress() {
+  return Number((0.2 + Math.random() * 0.4).toFixed(3));
+}
+
 export default defineModule({
   name: "life-sim",
   version: 1,
@@ -138,7 +146,7 @@ export default defineModule({
     }
   },
   views: {
-    default({ model }) {
+    summary({ model }) {
       return {
         profile: model.profile,
         mood: model.mood,
@@ -147,12 +155,28 @@ export default defineModule({
         wear: model.wear
       };
     },
-    prompt({ model }) {
+    MioBackground({ model }) {
+      const name = getCharacterName(model);
+
       return {
-        character: model.profile,
+        name,
+        background: `${name} is the focus of a slice-of-life roleplay. Keep scenes grounded in current feelings, simple daily details, and continuity from the model state.`,
         currentMood: model.mood,
         level: model.level,
         wearing: model.wear
+      };
+    },
+    MioMood({ model }) {
+      if (model.mood.stress === undefined || model.mood.stress < 0.5) {
+        model.mood.stress = randomStress();
+      }
+
+      return {
+        name: getCharacterName(model),
+        label: model.mood.label,
+        valence: model.mood.valence,
+        arousal: model.mood.arousal,
+        stress: model.mood.stress
       };
     }
   }

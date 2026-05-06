@@ -168,6 +168,10 @@ export function cloneModelForUserCode<TModel>(model: TModel): Readonly<TModel> {
   return clone as Readonly<TModel>;
 }
 
+export function cloneMutableModelForUserCode<TModel>(model: TModel): TModel {
+  return structuredClone(model);
+}
+
 function deepFreeze(value: unknown): void {
   if (!value || typeof value !== "object" || Object.isFrozen(value)) {
     return;

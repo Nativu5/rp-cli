@@ -19,7 +19,7 @@ export type RpErrorCode =
   | "ACTION_INPUT_INVALID"
   | "ACTION_RETURN_INVALID"
   | "ACTION_RUNTIME_ERROR"
-  // Creator-defined read-only view discovery and runtime failures.
+  // Creator-defined view discovery and runtime failures.
   | "VIEW_NOT_FOUND"
   | "VIEW_RUNTIME_ERROR"
   // Model schema version migration policy and execution failures.

@@ -1,10 +1,10 @@
 import { RpError } from "./errors.js";
-import { cloneModelForUserCode } from "./model.js";
+import { cloneMutableModelForUserCode } from "./model.js";
 import type { RpMeta, RpView, RpViewFunction } from "./types.js";
 
 export function findView(
   views: Record<string, RpView> | undefined,
-  requestedName: string
+  requestedName?: string
 ): { name: string; run: RpViewFunction } {
   const entries = Object.entries(views ?? {});
 
@@ -12,11 +12,11 @@ export function findView(
     throw new RpError("VIEW_NOT_FOUND", "module does not define views");
   }
 
-  if (!requestedName) {
+  if (requestedName !== undefined && requestedName.length === 0) {
     throw new RpError("VIEW_NOT_FOUND", "view name is required");
   }
 
-  const name = requestedName;
+  const name = requestedName ?? defaultViewName(views ?? {}, entries);
   const view = views?.[name];
 
   if (!name || !view) {
@@ -28,6 +28,18 @@ export function findView(
   }
 
   return { name, run: view.run };
+}
+
+function defaultViewName(views: Record<string, RpView>, entries: [string, RpView][]): string {
+  if (views.default) {
+    return "default";
+  }
+
+  if (views.brief) {
+    return "brief";
+  }
+
+  return entries[0][0];
 }
 
 export function listViews(views: Record<string, RpView> | undefined): { name: string; description?: string }[] {
@@ -44,10 +56,13 @@ export async function runView<TModel>(args: {
   view: RpViewFunction<TModel>;
   model: TModel;
   meta: RpMeta;
-}): Promise<unknown> {
+}): Promise<{ output: unknown; model: TModel }> {
+  const model = cloneMutableModelForUserCode(args.model);
+  let output: unknown;
+
   try {
-    return await args.view({
-      model: cloneModelForUserCode(args.model),
+    output = await args.view({
+      model,
       meta: args.meta
     });
   } catch (error) {
@@ -55,4 +70,6 @@ export async function runView<TModel>(args: {
       cause: error instanceof Error ? error.message : String(error)
     });
   }
+
+  return { output, model };
 }

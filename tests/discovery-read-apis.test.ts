@@ -23,7 +23,8 @@ describe("discovery and read APIs", () => {
       { name: "brief" },
       { name: "debug", description: "Debug view." },
       { name: "explode", description: "Throw an error." },
-      { name: "mutate", description: "Mutate model directly." }
+      { name: "mutate", description: "Mutate model directly." },
+      { name: "breakSchema", description: "Mutate model into an invalid shape." }
     ]);
   });
 
@@ -106,20 +107,46 @@ describe("discovery and read APIs", () => {
     });
   });
 
-  it("rejects views that directly mutate model", async () => {
+  it("persists model mutations made by a successful view", async () => {
     const workspace = await createWorkspace();
     await writeCurrentModel(workspace.modelPath);
-    const before = await readFile(workspace.modelPath, "utf8");
 
     const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "mutate"]);
 
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBeUndefined();
+    expect(result.json).toEqual({
+      value: "mutated",
+      count: 1
+    });
+    await expectModel(workspace.modelPath, {
+      value: "mutated",
+      count: 1
+    });
+  });
+
+  it("rejects view mutations that violate the model schema without writing them", async () => {
+    const workspace = await createWorkspace();
+    await writeCurrentModel(workspace.modelPath);
+
+    const result = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--model",
+      workspace.modelPath,
+      "view",
+      "breakSchema"
+    ]);
+
+    expect(result.exitCode).toBe(5);
     expect(result.json).toMatchObject({
       error: {
-        code: "VIEW_RUNTIME_ERROR"
+        code: "MODEL_VALIDATION_ERROR"
       }
     });
-    expect(await readFile(workspace.modelPath, "utf8")).toBe(before);
+    await expectModel(workspace.modelPath, {
+      value: "ready",
+      count: 1
+    });
   });
 
   it("outputs the model JSON Schema from model --schema", async () => {
@@ -262,6 +289,13 @@ async function createWorkspace(
       "        model.value = 'mutated';",
       "        return model;",
       "      }",
+      "    },",
+      "    breakSchema: {",
+      '      description: "Mutate model into an invalid shape.",',
+      "      run: ({ model }) => {",
+      "        model.count = 'bad';",
+      "        return model;",
+      "      }",
       "    }",
       "  }",
       "});"
@@ -288,6 +322,12 @@ async function writeCurrentModel(modelPath: string): Promise<void> {
       }
     })
   );
+}
+
+async function expectModel(modelPath: string, model: unknown): Promise<void> {
+  const envelope = JSON.parse(await readFile(modelPath, "utf8"));
+
+  expect(envelope.model).toEqual(model);
 }
 
 async function runCli(args: string[]): Promise<{

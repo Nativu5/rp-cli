@@ -77,6 +77,34 @@ describe("operation logging", () => {
     });
   });
 
+  it("appends view logs when a view mutates the model", async () => {
+    const workspace = await createWorkspace();
+    await initWorkspace(workspace);
+
+    await runCli([
+      "--module",
+      workspace.modulePath,
+      "--model",
+      workspace.modelPath,
+      "--reason",
+      "query side effect",
+      "view",
+      "touch"
+    ]);
+
+    const logResult = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "log"]);
+
+    expect(logResult.exitCode).toBeUndefined();
+    expect(logResult.json).toHaveLength(1);
+    expect(logResult.json[0]).toMatchObject({
+      type: "view",
+      name: "touch",
+      reason: "query side effect",
+      modelHashBefore: expect.stringMatching(/^sha256:/),
+      modelHashAfter: expect.stringMatching(/^sha256:/)
+    });
+  });
+
   it("limits rp log output to the most recent entries", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
@@ -222,6 +250,15 @@ async function createWorkspace(): Promise<{
       "          reason: 'value changed by action',",
       "          message: 'Value updated.'",
       "        };",
+      "      }",
+      "    }",
+      "  },",
+      "  views: {",
+      "    touch: {",
+      '      description: "Track that the model was viewed.",',
+      "      run({ model }) {",
+      "        model.count += 1;",
+      "        return { value: model.value, count: model.count };",
       "      }",
       "    }",
       "  }",

@@ -61,16 +61,16 @@ describe("creator experience", () => {
       message: "Story title updated."
     });
 
-    const promptView = await runCli([
+    const storySummaryView = await runCli([
       "--module",
       workspace.modulePath,
       "--model",
       workspace.modelPath,
       "view",
-      "prompt"
+      "story-summary"
     ]);
-    expect(promptView.exitCode).toBeUndefined();
-    expect(promptView.json).toEqual({
+    expect(storySummaryView.exitCode).toBeUndefined();
+    expect(storySummaryView.json).toEqual({
       title: "The Lantern Room",
       sceneCount: 0
     });
@@ -115,7 +115,7 @@ async function createWorkspace(): Promise<{
       "  return [{ op: 'replace', path: '/profile/title', value: title }];",
       "}",
       "",
-      "const promptView: RpView<StoryModel> = ({ model }) => ({",
+      "const storySummaryView: RpView<StoryModel> = ({ model }) => ({",
       "  title: model.profile.title,",
       "  sceneCount: model.scenes.length",
       "});",
@@ -141,7 +141,7 @@ async function createWorkspace(): Promise<{
       "    }",
       "  },",
       "  views: {",
-      "    prompt: promptView",
+      '    "story-summary": storySummaryView',
       "  }",
       "});"
     ].join("\n")

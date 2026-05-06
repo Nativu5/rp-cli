@@ -187,15 +187,52 @@ export async function listViewsOperation(input: { paths: RpPaths }): Promise<{ n
   return listViews(module.views);
 }
 
-export async function runViewOperation(input: { paths: RpPaths; name: string }): Promise<unknown> {
+export async function runViewOperation(input: {
+  paths: RpPaths;
+  name?: string;
+  dryRun?: boolean;
+  reason?: string;
+}): Promise<unknown> {
   const module = await loadModule(input.paths.modulePath);
   const view = findView(module.views, input.name);
-  const envelope = validateModelFile(module, await readModelFile(input.paths.modelPath));
 
-  return runView({
-    view: view.run,
-    model: envelope.model,
-    meta: envelope.rp
+  return withModelLock(input.paths, async () => {
+    const envelope = validateModelFile(module, await readModelFile(input.paths.modelPath));
+    const modelHashBefore = hashModel(envelope.model);
+    const result = await runView({
+      view: view.run,
+      model: envelope.model,
+      meta: envelope.rp
+    });
+
+    if (hashModel(result.model) === modelHashBefore) {
+      return result.output;
+    }
+
+    const nextModel = validateRoleModel(module, result.model);
+    const modelHashAfter = hashModel(nextModel);
+
+    if (modelHashAfter === modelHashBefore) {
+      return result.output;
+    }
+
+    const ctx = createRuntimeContext();
+    const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
+
+    if (!input.dryRun) {
+      await writeJsonFileAtomic(input.paths.modelPath, nextEnvelope);
+      await appendJsonLogEntry(input.paths.logPath, {
+        id: ctx.id("log"),
+        time: ctx.now(),
+        type: "view",
+        name: view.name,
+        ...(input.reason === undefined ? {} : { reason: input.reason }),
+        modelHashBefore,
+        modelHashAfter
+      });
+    }
+
+    return result.output;
   });
 }
 

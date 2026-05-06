@@ -1,7 +1,7 @@
 ---
 name: rp-cli-creator
 description: |
-  For creators designing and building RP CLI modules. Use this when defining roleplay model schemas with Zod, creating semantic actions, designing read-only views, writing migration functions, or structuring a module with defineModule. Trigger whenever the user mentions creating an rp.module.js or rp.module.ts, designing character models, defining actions like remember/setMood, writing views for prompts, or building a world model for AI agents. This skill is for the CREATOR side — the person who encodes the world rules and exposes them as a module.
+  For creators designing and building RP CLI modules. Use this when defining roleplay model schemas with Zod, creating semantic actions, designing named context views, writing migration functions, or structuring a module with defineModule. Trigger whenever the user mentions creating an rp.module.js or rp.module.ts, designing character models, defining actions like remember/setMood, writing views such as world-background or character-speech-style, or building a world model for AI agents. This skill is for the CREATOR side — the person who encodes the world rules and exposes them as a module.
 ---
 
 # RP CLI Creator Skill
@@ -14,7 +14,7 @@ RP CLI is a Zod-based command-line runtime for persistent story models. As a cre
 
 - **Model schema** — the shape of your world state (character profiles, moods, memories, inventory, relationships, etc.)
 - **Actions** — semantic write operations that agents use to modify state safely
-- **Views** — read-only functions that compress raw model data into useful context for prompts
+- **Views** — named functions that compress raw model data into domain-specific context
 - **Migrations** — functions that upgrade old model files when your schema evolves
 
 The framework handles validation, persistence, JSON Patch application, and audit logging.
@@ -30,12 +30,12 @@ Model (State) -> View (Read) -> Update (Write) -> Model (State) -> ...
 | MVU Component | RP CLI Equivalent          | Role                                                            |
 | ------------- | -------------------------- | --------------------------------------------------------------- |
 | **Model**     | `model` in `rp.model.json` | The single source of truth — persistent character/story state   |
-| **View**      | `views` in module          | Read-only functions that project model into context for prompts |
-| **Update**    | `actions` / `rp update`    | The ONLY way to mutate state — produces JSON Patch operations   |
+| **View**      | `views` in module          | Named functions that project model into domain-specific context |
+| **Update**    | `actions` / `rp update`    | The normal way to mutate state — produces JSON Patch operations |
 
-**The critical rule**: Data flows in one direction. Views never modify state. Updates never read directly — they receive input, compute a patch, and the framework applies it. This predictability makes the model reliable for AI agents.
+**The critical rule**: Updates are the normal write path. Views should usually be pure projections, but they may intentionally mutate the view model for query side effects; the runtime validates changed models before writing them back. This predictability makes the model reliable for AI agents while still allowing carefully designed read-time behavior.
 
-The `rp.model.json` file on disk is the **authoritative Model**. Views read from it. Updates write to it through the framework. No exceptions.
+The `rp.model.json` file on disk is the **authoritative Model**. Actions, patches, and intentional View side effects all go through runtime validation before persistence.
 
 ## Module Structure
 
@@ -61,7 +61,7 @@ export default defineModule({
   },
 
   views: {
-    // read-only context generators
+    // named context generators
   }
 });
 ```
@@ -182,11 +182,11 @@ actions: {
 
 ## Defining Views
 
-Views are **read-only** functions that compress model data into useful context. Agents call views before generating responses to understand the current situation.
+Views are named functions that compress model data into useful context. Agents call views before generating responses to understand the current situation. Keep views pure by default, and only use state mutation when a query side effect is genuinely part of the design.
 
 ```javascript
 views: {
-  default({ model }) {
+  summary({ model }) {
     return {
       profile: model.profile,
       mood: model.mood,
@@ -194,7 +194,7 @@ views: {
     };
   },
 
-  prompt({ model }) {
+  characterBackground({ model }) {
     return {
       character: model.profile,
       currentMood: model.mood.label,
@@ -206,10 +206,11 @@ views: {
 
 ### View Principles
 
-1. **Never modify state** — views are read-only by contract
+1. **Prefer pure projections** — most views should only read model data
 2. **Return whatever structure makes sense** — views aren't validated by Zod
 3. **Curate for the agent** — think about what context matters for the next response
-4. **Use meaningful names** — `prompt`, `brief`, `status`, `context`
+4. **Use meaningful names** — `world-background`, `mio-speech-style`, `summary`, `current-mood`
+5. **Use side effects deliberately** — if a view mutates model data, keep it small and schema-valid
 
 ## Handling Schema Evolution with Migrations
 
@@ -295,7 +296,7 @@ rp action <name> --schema  # What inputs an action expects
 
 1. **Don't expose raw JSON Patch in actions** — use semantic action names
 2. **Don't validate view output** — views return arbitrary JSON
-3. **Don't modify model in views** — they must be read-only
+3. **Don't hide major state changes in views** — use actions for intentional story events
 4. **Don't forget to increment version** — when schema changes
 5. **Don't skip `--reason`** in examples — it models good agent behavior
 
@@ -310,7 +311,7 @@ rp action <name> --schema  # What inputs an action expects
 | `model.defaults()` | Yes      | Factory function returning initial state |
 | `model.migrate`    | No       | Upgrade function for old schema versions |
 | `actions.*`        | No       | Semantic write operations                |
-| `views.*`          | No       | Read-only context generators             |
+| `views.*`          | No       | Named context generators                 |
 
 ## Getting Started Checklist
 
@@ -379,7 +380,7 @@ export default defineModule({
   },
 
   views: {
-    default({ model }) {
+    summary({ model }) {
       return {
         name: model.name,
         mood: model.mood,

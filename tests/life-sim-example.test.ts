@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -31,7 +31,7 @@ describe("life-sim example", () => {
       "Scene tone changed.",
       "action",
       "setMood",
-      '{"label":"flustered but happy","valence":0.68,"arousal":0.4}'
+      '{"label":"flustered but happy","valence":0.68,"arousal":0.4,"stress":0.3}'
     ]);
     expect(moodResult.exitCode).toBeUndefined();
 
@@ -55,14 +55,16 @@ describe("life-sim example", () => {
     ]);
     expect(updateResult.exitCode).toBeUndefined();
 
-    const promptView = await runLifeSim(workspace.modelPath, ["view", "prompt"]);
-    expect(promptView.exitCode).toBeUndefined();
-    expect(promptView.json).toMatchObject({
-      character: {},
+    const backgroundView = await runLifeSim(workspace.modelPath, ["view", "MioBackground"]);
+    expect(backgroundView.exitCode).toBeUndefined();
+    expect(backgroundView.json).toMatchObject({
+      name: "Mio",
+      background: expect.stringContaining("Mio"),
       currentMood: {
         label: "calm",
         valence: 0.68,
-        arousal: 0.4
+        arousal: 0.4,
+        stress: 0.3
       },
       level: 2,
       wearing: {
@@ -70,6 +72,14 @@ describe("life-sim example", () => {
         bottom: "gray skirt"
       }
     });
+
+    const moodView = await runLifeSim(workspace.modelPath, ["view", "MioMood"]);
+    expect(moodView.exitCode).toBeUndefined();
+    expect(moodView.json.stress).toBeGreaterThanOrEqual(0.2);
+    expect(moodView.json.stress).toBeLessThanOrEqual(0.6);
+
+    const envelopeAfterMoodView = JSON.parse(await readFile(workspace.modelPath, "utf8"));
+    expect(envelopeAfterMoodView.model.mood.stress).toBe(moodView.json.stress);
 
     const modelResult = await runLifeSim(workspace.modelPath, ["model"]);
     expect(modelResult.exitCode).toBeUndefined();
@@ -94,10 +104,10 @@ describe("life-sim example", () => {
       toVersion: 1
     });
 
-    const logResult = await runLifeSim(workspace.modelPath, ["log", "--limit", "2"]);
+    const logResult = await runLifeSim(workspace.modelPath, ["log", "--limit", "3"]);
     expect(logResult.exitCode).toBeUndefined();
-    expect(logResult.json).toHaveLength(2);
-    expect(logResult.json.map((entry: any) => entry.type)).toEqual(["action", "update"]);
+    expect(logResult.json).toHaveLength(3);
+    expect(logResult.json.map((entry: any) => entry.type)).toEqual(["action", "update", "view"]);
   });
 
   it("exposes action, view, and schema discovery for the example module", async () => {
@@ -117,7 +127,7 @@ describe("life-sim example", () => {
 
     const views = await runLifeSim(workspace.modelPath, ["view", "--list"]);
     expect(views.exitCode).toBeUndefined();
-    expect(views.json).toEqual(expect.arrayContaining([{ name: "default" }, { name: "prompt" }]));
+    expect(views.json.map((view: any) => view.name)).toEqual(["summary", "MioBackground", "MioMood"]);
 
     const actionSchema = await runLifeSim(workspace.modelPath, ["action", "setMood", "--schema"]);
     expect(actionSchema.exitCode).toBeUndefined();

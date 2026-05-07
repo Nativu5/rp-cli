@@ -33,7 +33,7 @@ describe("discovery and read APIs", () => {
     await writeCurrentModel(workspace.modelPath);
     const before = await readFile(workspace.modelPath, "utf8");
 
-    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view"]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "default"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({
@@ -61,11 +61,25 @@ describe("discovery and read APIs", () => {
     });
   });
 
+  it("requires a view name", async () => {
+    const workspace = await createWorkspace();
+    await writeCurrentModel(workspace.modelPath);
+
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view"]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.json).toMatchObject({
+      error: {
+        code: "VIEW_NOT_FOUND"
+      }
+    });
+  });
+
   it("falls back to the brief view when no default view exists", async () => {
     const workspace = await createWorkspace({ includeDefaultView: false });
     await writeCurrentModel(workspace.modelPath);
 
-    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view"]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "brief"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({
@@ -81,7 +95,7 @@ describe("discovery and read APIs", () => {
     });
     await writeCurrentModel(workspace.modelPath);
 
-    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view"]);
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "debug"]);
 
     expect(result.exitCode).toBeUndefined();
     expect(result.json).toEqual({

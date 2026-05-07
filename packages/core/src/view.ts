@@ -12,11 +12,11 @@ export function findView(
     throw new RpError("VIEW_NOT_FOUND", "module does not define views");
   }
 
-  if (requestedName !== undefined && requestedName.length === 0) {
+  if (requestedName === undefined || requestedName.length === 0) {
     throw new RpError("VIEW_NOT_FOUND", "view name is required");
   }
 
-  const name = requestedName ?? defaultViewName(views ?? {}, entries);
+  const name = requestedName;
   const view = views?.[name];
 
   if (!name || !view) {
@@ -28,18 +28,6 @@ export function findView(
   }
 
   return { name, run: view.run };
-}
-
-function defaultViewName(views: Record<string, RpView>, entries: [string, RpView][]): string {
-  if (views.default) {
-    return "default";
-  }
-
-  if (views.brief) {
-    return "brief";
-  }
-
-  return entries[0][0];
 }
 
 export function listViews(views: Record<string, RpView> | undefined): { name: string; description?: string }[] {

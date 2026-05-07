@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { RpError } from "./errors.js";
 import { cloneMutableModelForUserCode } from "./model.js";
-import { normalizeRunResult, type NormalizedRunResult } from "./runResult.js";
-import { formatZodIssues } from "./validation.js";
+import { normalizeRunResult, formatZodIssues } from "./validation.js";
+import type { RpResult } from "./types.js";
 import type { RpAction, RpMeta, RpRuntimeContext } from "./types.js";
 
 export function findAction(actions: Record<string, RpAction> | undefined, name: string): RpAction {
@@ -33,7 +33,7 @@ export async function runAction<TModel, TInput>(args: {
   input: TInput;
   meta: RpMeta;
   ctx: RpRuntimeContext;
-}): Promise<NormalizedRunResult & { model: TModel }> {
+}): Promise<RpResult & { model: TModel }> {
   const model = cloneMutableModelForUserCode(args.model);
   let value: unknown;
 

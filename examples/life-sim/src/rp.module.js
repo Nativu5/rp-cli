@@ -147,44 +147,53 @@ export default defineModule({
     }
   },
   views: {
-    summary({ model }) {
-      return {
-        result: {
-          profile: model.profile,
-          mood: model.mood,
-          relationshipCount: Object.keys(model.relationships).length,
-          level: model.level,
-          wear: model.wear
-        }
-      };
-    },
-    MioBackground({ model }) {
-      const name = getCharacterName(model);
-
-      return {
-        result: {
-          name,
-          background: `${name} is the focus of a slice-of-life roleplay. Keep scenes grounded in current feelings, simple daily details, and continuity from the model state.`,
-          currentMood: model.mood,
-          level: model.level,
-          wearing: model.wear
-        }
-      };
-    },
-    MioMood({ model }) {
-      if (model.mood.stress === undefined || model.mood.stress < 0.5) {
-        model.mood.stress = randomStress();
+    summary: {
+      description: "Overview of character state.",
+      run({ model }) {
+        return {
+          result: {
+            profile: model.profile,
+            mood: model.mood,
+            relationshipCount: Object.keys(model.relationships).length,
+            level: model.level,
+            wear: model.wear
+          }
+        };
       }
+    },
+    MioBackground: {
+      description: "Character background for roleplay.",
+      run({ model }) {
+        const name = getCharacterName(model);
 
-      return {
-        result: {
-          name: getCharacterName(model),
-          label: model.mood.label,
-          valence: model.mood.valence,
-          arousal: model.mood.arousal,
-          stress: model.mood.stress
+        return {
+          result: {
+            name,
+            background: `${name} is the focus of a slice-of-life roleplay. Keep scenes grounded in current feelings, simple daily details, and continuity from the model state.`,
+            currentMood: model.mood,
+            level: model.level,
+            wearing: model.wear
+          }
+        };
+      }
+    },
+    MioMood: {
+      description: "Current mood with randomized stress.",
+      run({ model }) {
+        if (model.mood.stress === undefined || model.mood.stress < 0.5) {
+          model.mood.stress = randomStress();
         }
-      };
+
+        return {
+          result: {
+            name: getCharacterName(model),
+            label: model.mood.label,
+            valence: model.mood.valence,
+            arousal: model.mood.arousal,
+            stress: model.mood.stress
+          }
+        };
+      }
     }
   }
 });

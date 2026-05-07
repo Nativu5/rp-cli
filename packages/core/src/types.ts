@@ -67,6 +67,11 @@ export interface RpViewObject<TModel = unknown> {
 
 export type RpView<TModel = unknown> = RpViewFunction<TModel> | RpViewObject<TModel>;
 
+export interface RpResult {
+  reason?: string;
+  result?: unknown;
+}
+
 export interface RpMigration<TModel = unknown> {
   (args: {
     model: unknown;

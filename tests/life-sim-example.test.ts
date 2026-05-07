@@ -132,7 +132,9 @@ describe("life-sim example", () => {
 
     const views = await runLifeSim(workspace.modelPath, ["view", "--list"]);
     expect(views.exitCode).toBeUndefined();
-    expect(views.stdout).toBe("summary\nMioBackground\nMioMood\n");
+    expect(views.stdout).toBe(
+      "summary: Overview of character state.\nMioBackground: Character background for roleplay.\nMioMood: Current mood with randomized stress.\n"
+    );
 
     const viewsJson = await runLifeSim(workspace.modelPath, ["--output", "json", "view", "--list"]);
     expect(viewsJson.exitCode).toBeUndefined();

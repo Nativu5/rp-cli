@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { RpError } from "./errors.js";
+import { RpError, type RpErrorCode } from "./errors.js";
 import { compareSchemaVersions } from "./migration.js";
-import type { RpMeta, RpModule, RpModelFile } from "./types.js";
+import type { RpMeta, RpModelFile, RpModule, RpResult } from "./types.js";
 
 export const RpMetaSchema = z.object({
   module: z.string().min(1),
@@ -93,5 +93,34 @@ export function validateModelFile<TModel>(module: RpModule<TModel>, envelope: Rp
   return {
     rp: envelope.rp,
     model: validateRoleModel(module, envelope.model)
+  };
+}
+
+export function normalizeRunResult(value: unknown, options: { errorCode: RpErrorCode; label: string }): RpResult {
+  if (value === undefined) {
+    return {};
+  }
+
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new RpError(options.errorCode, `${options.label} must return { reason?, result? } or undefined`);
+  }
+
+  const unknownKeys = Object.keys(value).filter((key) => key !== "reason" && key !== "result");
+
+  if (unknownKeys.length > 0) {
+    throw new RpError(options.errorCode, `${options.label} return contains unknown fields`, {
+      fields: unknownKeys
+    });
+  }
+
+  const result = value as Partial<RpResult>;
+
+  if (result.reason !== undefined && typeof result.reason !== "string") {
+    throw new RpError(options.errorCode, `${options.label} reason must be a string`);
+  }
+
+  return {
+    ...(result.reason === undefined ? {} : { reason: result.reason }),
+    ...("result" in result ? { result: result.result } : {})
   };
 }

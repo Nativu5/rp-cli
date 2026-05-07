@@ -1,7 +1,7 @@
 import { RpError } from "./errors.js";
 import { cloneMutableModelForUserCode } from "./model.js";
-import { normalizeRunResult, type NormalizedRunResult } from "./runResult.js";
-import type { RpMeta, RpRuntimeContext, RpView, RpViewFunction } from "./types.js";
+import { normalizeRunResult } from "./validation.js";
+import type { RpMeta, RpResult, RpRuntimeContext, RpView, RpViewFunction } from "./types.js";
 
 export function findView(
   views: Record<string, RpView> | undefined,
@@ -46,7 +46,7 @@ export async function runView<TModel>(args: {
   model: TModel;
   meta: RpMeta;
   ctx: RpRuntimeContext;
-}): Promise<NormalizedRunResult & { model: TModel }> {
+}): Promise<RpResult & { model: TModel }> {
   const model = cloneMutableModelForUserCode(args.model);
   let value: unknown;
 

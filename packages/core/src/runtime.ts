@@ -1,5 +1,5 @@
 import { toJSONSchema } from "zod";
-import { compare as compareJsonPatch } from "fast-json-patch";
+import fastJsonPatch from "fast-json-patch";
 import { createRuntimeContext, findAction, runAction, validateActionInput } from "./action.js";
 import { RpError } from "./errors.js";
 import { appendJsonLogEntry, hashModel, readJsonLogEntries } from "./log.js";
@@ -111,7 +111,7 @@ export async function runActionOperation(input: {
     }
 
     const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
-    const patch = compareJsonPatch(envelope.model as object, nextModel as object) as JsonPatch;
+    const patch = fastJsonPatch.compare(envelope.model as object, nextModel as object) as JsonPatch;
 
     if (!input.dryRun) {
       await writeJsonFileAtomic(input.paths.modelPath, nextEnvelope);

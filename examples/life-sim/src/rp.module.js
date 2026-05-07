@@ -75,15 +75,14 @@ export default defineModule({
         arousal: z.number().min(0).max(1).optional(),
         stress: z.number().min(0).max(1).optional()
       }),
-      run({ input }) {
+      run({ model, input }) {
+        for (const [key, value] of Object.entries(input)) {
+          model.mood[key] = value;
+        }
+
         return {
-          patch: Object.entries(input).map(([key, value]) => ({
-            op: "add",
-            path: `/mood/${key}`,
-            value
-          })),
           reason: "Mood fields were updated.",
-          message: "Mood updated."
+          result: "Mood updated."
         };
       }
     },
@@ -92,11 +91,12 @@ export default defineModule({
       input: z.object({
         level: z.number().min(0)
       }),
-      run({ input }) {
+      run({ model, input }) {
+        model.level = input.level;
+
         return {
-          patch: [{ op: "replace", path: "/level", value: input.level }],
           reason: "Level was updated.",
-          message: `Level set to ${input.level}.`
+          result: `Level set to ${input.level}.`
         };
       }
     },
@@ -104,10 +104,11 @@ export default defineModule({
       description: "Increase level by 1.",
       input: z.object({}),
       run({ model }) {
+        model.level += 1;
+
         return {
-          patch: [{ op: "replace", path: "/level", value: model.level + 1 }],
           reason: "Character leveled up.",
-          message: `Level up! Now level ${model.level + 1}.`
+          result: `Level up! Now level ${model.level}.`
         };
       }
     },
@@ -119,15 +120,14 @@ export default defineModule({
         underwear: z.string().optional(),
         accessory: z.string().optional()
       }),
-      run({ input }) {
+      run({ model, input }) {
+        for (const [key, value] of Object.entries(input)) {
+          model.wear[key] = value;
+        }
+
         return {
-          patch: Object.entries(input).map(([key, value]) => ({
-            op: "add",
-            path: `/wear/${key}`,
-            value
-          })),
           reason: "Wear was updated.",
-          message: "Wear updated."
+          result: "Wear updated."
         };
       }
     },
@@ -136,11 +136,12 @@ export default defineModule({
       input: z.object({
         slot: z.enum(["top", "bottom", "underwear", "accessory"])
       }),
-      run({ input }) {
+      run({ model, input }) {
+        delete model.wear[input.slot];
+
         return {
-          patch: [{ op: "remove", path: `/wear/${input.slot}` }],
           reason: `${input.slot} was removed.`,
-          message: `${input.slot} removed.`
+          result: `${input.slot} removed.`
         };
       }
     }
@@ -148,22 +149,26 @@ export default defineModule({
   views: {
     summary({ model }) {
       return {
-        profile: model.profile,
-        mood: model.mood,
-        relationshipCount: Object.keys(model.relationships).length,
-        level: model.level,
-        wear: model.wear
+        result: {
+          profile: model.profile,
+          mood: model.mood,
+          relationshipCount: Object.keys(model.relationships).length,
+          level: model.level,
+          wear: model.wear
+        }
       };
     },
     MioBackground({ model }) {
       const name = getCharacterName(model);
 
       return {
-        name,
-        background: `${name} is the focus of a slice-of-life roleplay. Keep scenes grounded in current feelings, simple daily details, and continuity from the model state.`,
-        currentMood: model.mood,
-        level: model.level,
-        wearing: model.wear
+        result: {
+          name,
+          background: `${name} is the focus of a slice-of-life roleplay. Keep scenes grounded in current feelings, simple daily details, and continuity from the model state.`,
+          currentMood: model.mood,
+          level: model.level,
+          wearing: model.wear
+        }
       };
     },
     MioMood({ model }) {
@@ -172,11 +177,13 @@ export default defineModule({
       }
 
       return {
-        name: getCharacterName(model),
-        label: model.mood.label,
-        valence: model.mood.valence,
-        arousal: model.mood.arousal,
-        stress: model.mood.stress
+        result: {
+          name: getCharacterName(model),
+          label: model.mood.label,
+          valence: model.mood.valence,
+          arousal: model.mood.arousal,
+          stress: model.mood.stress
+        }
       };
     }
   }

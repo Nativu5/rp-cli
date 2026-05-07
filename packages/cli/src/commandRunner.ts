@@ -1,18 +1,18 @@
 import type { Command } from "commander";
 import { RpError, resolveRpPaths, type RpErrorCode, type RpPaths } from "@rp-cli/core/internal";
-import { toErrorShape, writeJson } from "./output.js";
+import { toErrorShape, writeJson, type OutputMode } from "./output.js";
 
 export interface GlobalCliOptions {
   module?: string;
   model?: string;
-  pretty?: boolean;
+  output?: OutputMode;
   dryRun?: boolean;
   reason?: string;
 }
 
 export interface CommandContext {
   paths: RpPaths;
-  pretty: boolean;
+  output: OutputMode;
   dryRun: boolean;
   reason?: string;
 }
@@ -24,7 +24,7 @@ export async function runCommand(command: Command, run: (ctx: CommandContext) =>
       modulePath: options.module,
       modelPath: options.model
     }),
-    pretty: Boolean(options.pretty),
+    output: options.output ?? "default",
     dryRun: Boolean(options.dryRun),
     reason: options.reason
   };
@@ -32,7 +32,7 @@ export async function runCommand(command: Command, run: (ctx: CommandContext) =>
   try {
     await run(context);
   } catch (error) {
-    writeJson(toErrorShape(error), context.pretty);
+    writeJson(toErrorShape(error));
     process.exitCode = exitCodeForError(error);
   }
 }

@@ -254,10 +254,17 @@ async function runCli(args: string[]): Promise<{
   await program.parseAsync(args, { from: "user" });
 
   const stdout = writes.join("");
+  let json: any;
+
+  try {
+    json = stdout.length === 0 ? undefined : JSON.parse(stdout);
+  } catch {
+    json = undefined;
+  }
 
   return {
     stdout,
-    json: JSON.parse(stdout),
+    json,
     exitCode: process.exitCode
   };
 }

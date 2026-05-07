@@ -39,13 +39,14 @@ describe("runtime foundations", () => {
         setValue: {
           description: "Set the value.",
           input: z.object({ value: z.string() }),
-          run: ({ input }) => ({
-            patch: [{ op: "replace", path: "/value", value: input.value }]
-          })
+          run: ({ model, input }) => {
+            model.value = input.value;
+            return { result: model.value };
+          }
         }
       },
       views: {
-        default: ({ model }) => model
+        default: ({ model }) => ({ result: model })
       }
     });
 

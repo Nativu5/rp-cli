@@ -150,7 +150,7 @@ describe("write commands", () => {
     );
   });
 
-  it("runs an action, applies its patch, and persists the next model", async () => {
+  it("runs an action, prints its result, and persists the next model", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
@@ -165,13 +165,7 @@ describe("write commands", () => {
     ]);
 
     expect(result.exitCode).toBeUndefined();
-    expect(result.json).toMatchObject({
-      result: {
-        patch: [{ op: "replace", path: "/value", value: "from-action" }],
-        model: { value: "from-action", count: 1, memories: [] }
-      },
-      message: "Value updated."
-    });
+    expect(result.stdout).toBe("Value updated.\n");
     await expectModel(workspace.modelPath, {
       value: "from-action",
       count: 1,
@@ -220,7 +214,7 @@ describe("write commands", () => {
     ]);
 
     expect(result.exitCode).toBeUndefined();
-    expect(result.json.result.model.value).toBe("preview-action");
+    expect(result.stdout).toBe("Value updated.\n");
     await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
@@ -255,7 +249,7 @@ describe("write commands", () => {
     });
   });
 
-  it("returns null result for actions with no patch operations", async () => {
+  it("prints action results even when the model does not change", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
@@ -270,10 +264,7 @@ describe("write commands", () => {
     ]);
 
     expect(result.exitCode).toBeUndefined();
-    expect(result.json).toEqual({
-      result: null,
-      message: "No changes."
-    });
+    expect(result.stdout).toBe("No changes.\n");
     await expectModel(workspace.modelPath, {
       value: "ready",
       count: 1,
@@ -308,7 +299,7 @@ describe("write commands", () => {
     });
   });
 
-  it("rejects action patches that would violate the model schema", async () => {
+  it("rejects action mutations that would violate the model schema", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
@@ -357,7 +348,7 @@ describe("write commands", () => {
     });
   });
 
-  it("rejects actions that directly mutate model outside JSON Patch", async () => {
+  it("allows actions to directly mutate model", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
@@ -371,14 +362,10 @@ describe("write commands", () => {
       "{}"
     ]);
 
-    expect(result.exitCode).toBe(6);
-    expect(result.json).toMatchObject({
-      error: {
-        code: "ACTION_RUNTIME_ERROR"
-      }
-    });
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toBe("Mutated.\n");
     await expectModel(workspace.modelPath, {
-      value: "ready",
+      value: "mutated",
       count: 1,
       memories: []
     });
@@ -422,26 +409,25 @@ async function createWorkspace(): Promise<{
       "    setValue: {",
       '      description: "Set the value.",',
       "      input: z.object({ value: z.string() }),",
-      "      run({ input }) {",
+      "      run({ model, input }) {",
+      "        model.value = input.value;",
       "        return {",
-      '          patch: [{ op: "replace", path: "/value", value: input.value }],',
-      '          message: "Value updated."',
+      '          reason: "Value changed by action.",',
+      '          result: "Value updated."',
       "        };",
       "      }",
       "    },",
       "    remember: {",
       '      description: "Remember text.",',
       "      input: z.object({ text: z.string() }),",
-      "      run({ input, ctx }) {",
-      "        return {",
-      '          patch: [{ op: "add", path: "/memories/-", value: { id: ctx.id("mem"), text: input.text, createdAt: ctx.now() } }]',
-      "        };",
+      "      run({ model, input, ctx }) {",
+      '        model.memories.push({ id: ctx.id("mem"), text: input.text, createdAt: ctx.now() });',
       "      }",
       "    },",
       "    noop: {",
       '      description: "No operation.",',
       "      input: z.object({}),",
-      '      run: () => ({ patch: [], message: "No changes." })',
+      '      run: () => ({ result: "No changes." })',
       "    },",
       "    badReturn: {",
       '      description: "Return invalid data.",',
@@ -449,16 +435,19 @@ async function createWorkspace(): Promise<{
       '      run: () => ({ patch: "bad" })',
       "    },",
       "    breakSchema: {",
-      '      description: "Return schema-invalid patch.",',
+      '      description: "Mutate into a schema-invalid model.",',
       "      input: z.object({}),",
-      '      run: () => ({ patch: [{ op: "replace", path: "/count", value: "bad" }] })',
+      "      run({ model }) {",
+      '        model.count = "bad";',
+      '        return { result: "Broken." };',
+      "      }",
       "    },",
       "    mutateModel: {",
       '      description: "Mutate model directly.",',
       "      input: z.object({}),",
       "      run({ model }) {",
       '        model.value = "mutated";',
-      "        return { patch: [] };",
+      '        return { result: "Mutated." };',
       "      }",
       "    },",
       "    explode: {",
@@ -503,10 +492,17 @@ async function runCli(args: string[]): Promise<{
   await program.parseAsync(args, { from: "user" });
 
   const stdout = writes.join("");
+  let json: any;
+
+  try {
+    json = stdout.length === 0 ? undefined : JSON.parse(stdout);
+  } catch {
+    json = undefined;
+  }
 
   return {
     stdout,
-    json: JSON.parse(stdout),
+    json,
     exitCode: process.exitCode
   };
 }

@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { RpError } from "./errors.js";
-import { assertJsonPatch } from "./patch.js";
-import { cloneModelForUserCode } from "./model.js";
+import { cloneMutableModelForUserCode } from "./model.js";
+import { normalizeRunResult, type NormalizedRunResult } from "./runResult.js";
 import { formatZodIssues } from "./validation.js";
-import type { RpAction, RpActionReturn, RpMeta, RpRuntimeContext } from "./types.js";
+import type { RpAction, RpMeta, RpRuntimeContext } from "./types.js";
 
 export function findAction(actions: Record<string, RpAction> | undefined, name: string): RpAction {
   const action = actions?.[name];
@@ -13,31 +13,6 @@ export function findAction(actions: Record<string, RpAction> | undefined, name: 
   }
 
   return action;
-}
-
-export function assertActionReturn(value: unknown): asserts value is RpActionReturn {
-  if (!value || typeof value !== "object" || !("patch" in value)) {
-    throw new RpError("ACTION_RETURN_INVALID", "action must return { patch, reason?, message? }");
-  }
-
-  const result = value as Partial<RpActionReturn>;
-
-  if (result.reason !== undefined && typeof result.reason !== "string") {
-    throw new RpError("ACTION_RETURN_INVALID", "action reason must be a string");
-  }
-
-  if (result.message !== undefined && typeof result.message !== "string") {
-    throw new RpError("ACTION_RETURN_INVALID", "action message must be a string");
-  }
-
-  try {
-    assertJsonPatch(result.patch);
-  } catch (error) {
-    throw new RpError("ACTION_RETURN_INVALID", "action patch is invalid", {
-      cause: error instanceof Error ? error.message : String(error),
-      details: error instanceof RpError ? error.details : undefined
-    });
-  }
 }
 
 export function validateActionInput<TInput>(action: RpAction<unknown, TInput>, input: unknown): TInput {
@@ -58,12 +33,13 @@ export async function runAction<TModel, TInput>(args: {
   input: TInput;
   meta: RpMeta;
   ctx: RpRuntimeContext;
-}): Promise<RpActionReturn> {
+}): Promise<NormalizedRunResult & { model: TModel }> {
+  const model = cloneMutableModelForUserCode(args.model);
   let value: unknown;
 
   try {
     value = await args.action.run({
-      model: cloneModelForUserCode(args.model),
+      model,
       input: args.input,
       meta: args.meta,
       ctx: args.ctx
@@ -74,8 +50,13 @@ export async function runAction<TModel, TInput>(args: {
     });
   }
 
-  assertActionReturn(value);
-  return value;
+  return {
+    ...normalizeRunResult(value, {
+      errorCode: "ACTION_RETURN_INVALID",
+      label: "action"
+    }),
+    model
+  };
 }
 
 export function createRuntimeContext(): RpRuntimeContext {

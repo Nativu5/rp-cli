@@ -8,8 +8,8 @@ export function registerMigrateCommand(program: Command): void {
     .command("migrate")
     .description("Migrate model to the current schema version.")
     .action(async (_options, command) => {
-      await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
-        writeJson(await migrateModelOperation({ paths, dryRun, reason }), pretty);
+      await runCommand(command, async ({ paths, dryRun, reason }) => {
+        writeJson(await migrateModelOperation({ paths, dryRun, reason }));
       });
     });
 }

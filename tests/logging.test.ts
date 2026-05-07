@@ -44,7 +44,7 @@ describe("operation logging", () => {
     expect(logResult.json[0].time).toEqual(expect.any(String));
   });
 
-  it("appends action logs with CLI reason, action reason, message, input, and patch", async () => {
+  it("appends action logs with CLI reason, action reason, input, and patch", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);
 
@@ -69,7 +69,6 @@ describe("operation logging", () => {
       name: "setValue",
       reason: "semantic update",
       actionReason: "value changed by action",
-      message: "Value updated.",
       input: { value: "from-action" },
       patch: [{ op: "replace", path: "/value", value: "from-action" }],
       modelHashBefore: expect.stringMatching(/^sha256:/),
@@ -244,11 +243,11 @@ async function createWorkspace(): Promise<{
       "    setValue: {",
       '      description: "Set the value.",',
       "      input: z.object({ value: z.string() }),",
-      "      run({ input }) {",
+      "      run({ model, input }) {",
+      "        model.value = input.value;",
       "        return {",
-      "          patch: [{ op: 'replace', path: '/value', value: input.value }],",
       "          reason: 'value changed by action',",
-      "          message: 'Value updated.'",
+      "          result: 'Value updated.'",
       "        };",
       "      }",
       "    }",
@@ -258,7 +257,7 @@ async function createWorkspace(): Promise<{
       '      description: "Track that the model was viewed.",',
       "      run({ model }) {",
       "        model.count += 1;",
-      "        return { value: model.value, count: model.count };",
+      "        return { result: { value: model.value, count: model.count } };",
       "      }",
       "    }",
       "  }",
@@ -298,10 +297,17 @@ async function runCli(args: string[]): Promise<{
   await program.parseAsync(args, { from: "user" });
 
   const stdout = writes.join("");
+  let json: any;
+
+  try {
+    json = stdout.length === 0 ? undefined : JSON.parse(stdout);
+  } catch {
+    json = undefined;
+  }
 
   return {
     stdout,
-    json: JSON.parse(stdout),
+    json,
     exitCode: process.exitCode
   };
 }

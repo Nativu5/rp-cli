@@ -26,11 +26,11 @@ You interact through the `rp` CLI commands.
 
 RP CLI follows the **Model-View-Update (MVU)** pattern:
 
-| Component                   | What it does                                                    |
-| --------------------------- | --------------------------------------------------------------- |
-| **Model** (`rp.model.json`) | The single source of truth — character state on disk            |
-| **View** (`rp view`)        | Projects model into a context summary for you to read           |
-| **Update** (`rp action`)    | Records what happened — produces a patch that updates the model |
+| Component                   | What it does                                          |
+| --------------------------- | ----------------------------------------------------- |
+| **Model** (`rp.model.json`) | The single source of truth — character state on disk  |
+| **View** (`rp view`)        | Projects model into a context summary for you to read |
+| **Update** (`rp action`)    | Records what happened through a semantic state change |
 
 ## Core Workflow
 
@@ -53,6 +53,7 @@ RP CLI follows the **Model-View-Update (MVU)** pattern:
 3. Record changes:
 
 - Use `rp action <name> '<json>' --reason "..."` to make sure your changes are properly recorded in the state.
+- Action and view commands print the creator-defined result by default. Use `--output json` when you need a stable JSON envelope.
 
 ## Best Practices
 

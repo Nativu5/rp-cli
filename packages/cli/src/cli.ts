@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import { readFileSync, realpathSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -25,9 +25,11 @@ export function createProgram(): Command {
     .version(pkg.version)
     .option("--module <path>", 'module file path ("rp.module.ts" or "rp.module.js")')
     .option("--model <path>", 'model file path ("rp.model.json")')
-    .option("--pretty", "pretty-print JSON output")
     .option("--dry-run", "preview commands without persisting")
     .option("--reason <text>", "write reason for logs");
+  program.addOption(
+    new Option("--output <mode>", "action/view output mode").choices(["default", "json"]).default("default")
+  );
 
   registerInitCommand(program);
   registerValidateCommand(program);

@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { listViewsOperation, runViewOperation } from "@rp-cli/core/internal";
 import { runCommand } from "../commandRunner.js";
-import { writeJson } from "../output.js";
+import { writeJson, writeResult } from "../output.js";
 
 export function registerViewCommand(program: Command): void {
   program
@@ -10,13 +10,13 @@ export function registerViewCommand(program: Command): void {
     .argument("[name]", "view name")
     .option("--list", "list available views")
     .action(async (name: string | undefined, options: { list?: boolean }, command) => {
-      await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
+      await runCommand(command, async ({ paths, output, dryRun, reason }) => {
         if (options.list) {
-          writeJson(await listViewsOperation({ paths }), pretty);
+          writeJson(await listViewsOperation({ paths }));
           return;
         }
 
-        writeJson(await runViewOperation({ paths, name, dryRun, reason }), pretty);
+        writeResult(await runViewOperation({ paths, name, dryRun, reason }), output);
       });
     });
 }

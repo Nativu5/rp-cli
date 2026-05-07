@@ -11,7 +11,7 @@ export function registerUpdateCommand(program: Command): void {
     .argument("[patch]", "JSON Patch string (RFC 6902)")
     .option("--file <path>", "read JSON Patch from a file")
     .action(async (patchArgument: string | undefined, options: { file?: string }, command) => {
-      await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
+      await runCommand(command, async ({ paths, dryRun, reason }) => {
         const patchInput = await readJsonInput({
           inline: patchArgument,
           filePath: options.file,
@@ -25,8 +25,7 @@ export function registerUpdateCommand(program: Command): void {
             patch: patchInput,
             dryRun,
             reason
-          }),
-          pretty
+          })
         );
       });
     });

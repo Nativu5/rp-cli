@@ -49,17 +49,7 @@ describe("creator experience", () => {
       '{"title":"The Lantern Room"}'
     ]);
     expect(actionResult.exitCode).toBeUndefined();
-    expect(actionResult.json).toMatchObject({
-      result: {
-        model: {
-          profile: {
-            title: "The Lantern Room"
-          },
-          scenes: []
-        }
-      },
-      message: "Story title updated."
-    });
+    expect(actionResult.stdout).toBe("Story title updated.\n");
 
     const storySummaryView = await runCli([
       "--module",
@@ -99,7 +89,7 @@ async function createWorkspace(): Promise<{
   await writeFile(
     modulePath,
     [
-      'import { defineModule, type JsonPatch, type RpActionReturn, type RpView } from "@rp-cli/core";',
+      'import { defineModule, type RpActionReturn, type RpView } from "@rp-cli/core";',
       'import { z } from "zod";',
       "",
       "const ModelSchema = z.object({",
@@ -111,14 +101,10 @@ async function createWorkspace(): Promise<{
       "",
       "type StoryModel = z.infer<typeof ModelSchema>;",
       "",
-      "function replaceTitle(title: string): JsonPatch {",
-      "  return [{ op: 'replace', path: '/profile/title', value: title }];",
-      "}",
-      "",
-      "const storySummaryView: RpView<StoryModel> = ({ model }) => ({",
+      "const storySummaryView: RpView<StoryModel> = ({ model }) => ({ result: {",
       "  title: model.profile.title,",
       "  sceneCount: model.scenes.length",
-      "});",
+      "} });",
       "",
       "export default defineModule({",
       '  name: "creator-story",',
@@ -132,10 +118,10 @@ async function createWorkspace(): Promise<{
       "    setTitle: {",
       '      description: "Set the story title.",',
       "      input: z.object({ title: z.string().min(1) }),",
-      "      run({ input }): RpActionReturn {",
+      "      run({ model, input }): RpActionReturn {",
+      "        model.profile.title = input.title;",
       "        return {",
-      "          patch: replaceTitle(input.title),",
-      '          message: "Story title updated."',
+      '          result: "Story title updated."',
       "        };",
       "      }",
       "    }",
@@ -167,10 +153,17 @@ async function runCli(args: string[]): Promise<{
   await program.parseAsync(args, { from: "user" });
 
   const stdout = writes.join("");
+  let json: any;
+
+  try {
+    json = stdout.length === 0 ? undefined : JSON.parse(stdout);
+  } catch {
+    json = undefined;
+  }
 
   return {
     stdout,
-    json: JSON.parse(stdout),
+    json,
     exitCode: process.exitCode
   };
 }

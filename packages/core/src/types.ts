@@ -29,38 +29,36 @@ export type RpActionContext = RpRuntimeContext;
 export type RpMigrationContext = RpRuntimeContext;
 
 export interface RpActionReturn {
-  patch: JsonPatch;
   reason?: string;
-  message?: string;
+  result?: unknown;
 }
 
 export interface RpAction<TModel = unknown, TInput = unknown> {
   description: string;
   input: ZodType<TInput, unknown>;
-  run(args: {
-    model: Readonly<TModel>;
-    input: TInput;
-    meta: RpMeta;
-    ctx: RpActionContext;
-  }): MaybePromise<RpActionReturn>;
+  run(args: { model: TModel; input: TInput; meta: RpMeta; ctx: RpActionContext }): MaybePromise<RpActionReturn | void>;
 }
 
 export interface RpActionDefinition<TModel = unknown, TInputSchema extends AnyZodSchema = AnyZodSchema> {
   description: string;
   input: TInputSchema;
   run(args: {
-    model: Readonly<TModel>;
+    model: TModel;
     input: SchemaOutput<TInputSchema>;
     meta: RpMeta;
     ctx: RpActionContext;
-  }): MaybePromise<RpActionReturn>;
+  }): MaybePromise<RpActionReturn | void>;
 }
 
 export type RpActionDefinitions<TModel, TActions> = {
   [TName in keyof TActions]: TActions[TName] extends AnyZodSchema ? RpActionDefinition<TModel, TActions[TName]> : never;
 };
 
-export type RpViewFunction<TModel = unknown> = (args: { model: TModel; meta: RpMeta }) => MaybePromise<unknown>;
+export type RpViewFunction<TModel = unknown> = (args: {
+  model: TModel;
+  meta: RpMeta;
+  ctx: RpRuntimeContext;
+}) => MaybePromise<RpActionReturn | void>;
 
 export interface RpViewObject<TModel = unknown> {
   description?: string;

@@ -9,10 +9,10 @@ export function registerLogCommand(program: Command): void {
     .description("Read operation logs.")
     .option("--limit <count>", "number of log entries to output")
     .action(async (options: { limit?: string }, command) => {
-      await runCommand(command, async ({ paths, pretty }) => {
+      await runCommand(command, async ({ paths }) => {
         const limit = parseLimit(options.limit);
 
-        writeJson(await readLogOperation({ paths, limit }), pretty);
+        writeJson(await readLogOperation({ paths, limit }));
       });
     });
 }

@@ -7,7 +7,7 @@ import {
 } from "@rp-cli/core/internal";
 import { readJsonInput } from "../jsonInput.js";
 import { runCommand } from "../commandRunner.js";
-import { writeJson } from "../output.js";
+import { writeJson, writeResult } from "../output.js";
 
 export function registerActionCommand(program: Command): void {
   program
@@ -25,9 +25,9 @@ export function registerActionCommand(program: Command): void {
         options: { list?: boolean; schema?: boolean; file?: string },
         command
       ) => {
-        await runCommand(command, async ({ paths, pretty, dryRun, reason }) => {
+        await runCommand(command, async ({ paths, output, dryRun, reason }) => {
           if (options.list) {
-            writeJson(await listActionSummariesOperation({ paths }), pretty);
+            writeJson(await listActionSummariesOperation({ paths }));
             return;
           }
 
@@ -36,7 +36,7 @@ export function registerActionCommand(program: Command): void {
           }
 
           if (options.schema) {
-            writeJson(await exportActionInputSchemaOperation({ paths, name }), pretty);
+            writeJson(await exportActionInputSchemaOperation({ paths, name }));
             return;
           }
 
@@ -46,7 +46,7 @@ export function registerActionCommand(program: Command): void {
             errorCode: "ACTION_INPUT_INVALID",
             description: "action input"
           });
-          writeJson(
+          writeResult(
             await runActionOperation({
               paths,
               name,
@@ -54,7 +54,7 @@ export function registerActionCommand(program: Command): void {
               dryRun,
               reason
             }),
-            pretty
+            output
           );
         });
       }

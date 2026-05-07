@@ -8,8 +8,8 @@ export function registerValidateCommand(program: Command): void {
     .command("validate")
     .description("Validate the current model file.")
     .action(async (_options, command) => {
-      await runCommand(command, async ({ paths, pretty }) => {
-        writeJson(await validateModelOperation({ paths }), pretty);
+      await runCommand(command, async ({ paths }) => {
+        writeJson(await validateModelOperation({ paths }));
       });
     });
 }

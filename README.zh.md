@@ -12,7 +12,7 @@ RP CLI 遵循 Model-View-Update。
 
 - **Model** 是持久化的 `rp.model.json`，可以保存角色档案、情绪、关系、记忆、物品或创作者定义的任意状态。
 - **View** 通常把模型组合成适合 Agent 的上下文。创作者也可以有意在 View 中修改模型来表达查询副作用，例如记录某段上下文已经被读取。
-- **Update** 是常规写入路径，可以是命名 action 或显式 JSON Patch，也仍然是表达有意状态变化的推荐方式。
+- **Update** 是常规写入路径。命名 action 会直接修改经过验证的模型副本，`rp update` 则保留为底层 JSON Patch 逃生口。
 
 RP CLI 将创作者定义的“游戏规则”留在 module 的内部，并向外提供稳定的工具接口。
 
@@ -39,6 +39,8 @@ rp \
 运行时需要 Node.js `>=20.0.0`。推荐创作者优先使用 `.js` 或 `.mjs` module，以获得更好的兼容性。本地 `.ts` 和 `.mts` module 也支持，但直接加载需要 Node.js `>=24.0.0`。
 
 默认情况下，`rp` 会在 `./rp.model.json` 旁寻找 `./rp.module.ts` 和 `./rp.module.js`。也可以传入 `--module` / `--model`，或设置 `RP_MODULE` / `RP_MODEL`。
+
+Action 和 view 命令默认只打印创作者设置的 `result`。如果需要稳定 JSON envelope，例如 `{ "result": ... }`，可以使用 `--output json`。
 
 ## 仓库导览
 

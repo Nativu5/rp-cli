@@ -269,8 +269,9 @@ async function createWorkspace(
       "    setValue: {",
       '      description: "Set the value.",',
       "      input: z.object({ value: z.string() }),",
-      "      run({ input }) {",
-      "        return { patch: [{ op: 'replace', path: '/value', value: input.value }] };",
+      "      run({ model, input }) {",
+      "        model.value = input.value;",
+      "        return { result: model.value };",
       "      }",
       "    }",
       "  },",
@@ -279,19 +280,19 @@ async function createWorkspace(
         ? [
             "    default: {",
             '      description: "Full view.",',
-            "      run: ({ model, meta }) => ({",
+            "      run: ({ model, meta }) => ({ result: {",
             '        kind: "default",',
             "        value: model.value,",
             "        count: model.count,",
             "        module: meta.module",
-            "      })",
+            "      } })",
             "    },"
           ]
         : []),
-      ...(includeBriefView ? ["    brief: ({ model }) => ({ kind: 'brief', value: model.value }),"] : []),
+      ...(includeBriefView ? ["    brief: ({ model }) => ({ result: { kind: 'brief', value: model.value } }),"] : []),
       "    debug: {",
       '      description: "Debug view.",',
-      "      run: ({ model, meta }) => ({ raw: model, schemaVersion: meta.schemaVersion })",
+      "      run: ({ model, meta }) => ({ result: { raw: model, schemaVersion: meta.schemaVersion } })",
       "    },",
       "    explode: {",
       '      description: "Throw an error.",',
@@ -301,14 +302,14 @@ async function createWorkspace(
       '      description: "Mutate model directly.",',
       "      run: ({ model }) => {",
       "        model.value = 'mutated';",
-      "        return model;",
+      "        return { result: model };",
       "      }",
       "    },",
       "    breakSchema: {",
       '      description: "Mutate model into an invalid shape.",',
       "      run: ({ model }) => {",
       "        model.count = 'bad';",
-      "        return model;",
+      "        return { result: model };",
       "      }",
       "    }",
       "  }",
@@ -361,10 +362,17 @@ async function runCli(args: string[]): Promise<{
   await program.parseAsync(args, { from: "user" });
 
   const stdout = writes.join("");
+  let json: any;
+
+  try {
+    json = stdout.length === 0 ? undefined : JSON.parse(stdout);
+  } catch {
+    json = undefined;
+  }
 
   return {
     stdout,
-    json: JSON.parse(stdout),
+    json,
     exitCode: process.exitCode
   };
 }

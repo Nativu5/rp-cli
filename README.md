@@ -12,7 +12,7 @@ RP CLI follows Model-View-Update.
 
 - **Model** is the persisted `rp.model.json` file and can store character profiles, emotions, relationships, memories, items, or any other creator-defined state.
 - **View** usually combines the model into agent-friendly context. A creator can also intentionally mutate the model inside a View to express query side effects, such as recording that a piece of context has already been read.
-- **Update** is the normal write path, whether through named actions or explicit JSON Patch, and remains the recommended way to express intentional state changes.
+- **Update** is the normal write path. Named actions mutate a validated model clone directly, while `rp update` remains as a low-level JSON Patch escape hatch.
 
 RP CLI keeps the creator-defined game rules inside the module and exposes a stable tool interface to the outside.
 
@@ -37,6 +37,8 @@ rp \
 Node.js `>=20.0.0` is required. Creators should prefer `.js` or `.mjs` modules for the widest compatibility. Local `.ts` and `.mts` modules are also supported when running on Node.js `>=24.0.0`.
 
 By default, `rp` looks for `./rp.module.ts` and `./rp.module.js` next to `./rp.model.json`. You can also pass `--module` / `--model`, or set `RP_MODULE` / `RP_MODEL`.
+
+Action and view commands print only the creator-defined `result` by default. Use `--output json` when you need a stable JSON envelope such as `{ "result": ... }`.
 
 ## Repository Guide
 

@@ -17,7 +17,7 @@ RP CLI is a Zod-based command-line runtime for persistent story models. As a cre
 - **Views** — named functions that compress raw model data into domain-specific context
 - **Migrations** — functions that upgrade old model files when your schema evolves
 
-The framework handles validation, persistence, JSON Patch application, and audit logging.
+The framework handles validation, persistence, action/view result output, and audit logging.
 
 ## The Core Pattern: Model-View-Update (MVU)
 
@@ -27,15 +27,15 @@ RP CLI implements the **Model-View-Update** architecture, a unidirectional data 
 Model (State) -> View (Read) -> Update (Write) -> Model (State) -> ...
 ```
 
-| MVU Component | RP CLI Equivalent          | Role                                                            |
-| ------------- | -------------------------- | --------------------------------------------------------------- |
-| **Model**     | `model` in `rp.model.json` | The single source of truth — persistent character/story state   |
-| **View**      | `views` in module          | Named functions that project model into domain-specific context |
-| **Update**    | `actions` / `rp update`    | The normal way to mutate state — produces JSON Patch operations |
+| MVU Component | RP CLI Equivalent          | Role                                                                    |
+| ------------- | -------------------------- | ----------------------------------------------------------------------- |
+| **Model**     | `model` in `rp.model.json` | The single source of truth — persistent character/story state           |
+| **View**      | `views` in module          | Named functions that project model into domain-specific context         |
+| **Update**    | `actions`                  | The normal way to mutate state — actions mutate a validated model clone |
 
 **The critical rule**: Updates are the normal write path. Views should usually be pure projections, but they may intentionally mutate the view model for query side effects; the runtime validates changed models before writing them back. This predictability makes the model reliable for AI agents while still allowing carefully designed read-time behavior.
 
-The `rp.model.json` file on disk is the **authoritative Model**. Actions, patches, and intentional View side effects all go through runtime validation before persistence.
+The `rp.model.json` file on disk is the **authoritative Model**. Actions, low-level patches, and intentional View side effects all go through runtime validation before persistence.
 
 ## Module Structure
 
@@ -133,23 +133,18 @@ actions: {
       tags: z.array(z.string()).default([]),
       pinned: z.boolean().default(false)
     }),
-    run({ input, ctx }) {
+    run({ model, input, ctx }) {
+      model.memories.push({
+        id: ctx.id("mem"),
+        text: input.text,
+        tags: input.tags,
+        pinned: input.pinned,
+        createdAt: ctx.now()
+      });
+
       return {
-        patch: [
-          {
-            op: "add",
-            path: "/memories/-",
-            value: {
-              id: ctx.id("mem"),
-              text: input.text,
-              tags: input.tags,
-              pinned: input.pinned,
-              createdAt: ctx.now()
-            }
-          }
-        ],
         reason: "A long-term memory was added.",
-        message: "Memory recorded."
+        result: "Memory recorded."
       };
     }
   }
@@ -158,11 +153,11 @@ actions: {
 
 ### Key Action Principles
 
-1. **Return JSON Patch, not direct writes** — actions produce patches that the framework validates and applies
+1. **Mutate `model` directly** — actions receive a safe mutable clone that the framework validates before persistence
 2. **Use `ctx.id(prefix)`** to generate unique IDs
 3. **Use `ctx.now()`** for timestamps (ISO 8601 format)
 4. **Include a `reason`** explaining why (goes to audit log, not model)
-5. **Include a `message`** for CLI output to confirm the action
+5. **Return a `result`** for CLI output when the user should see confirmation or data
 
 ### Good Action Examples
 
@@ -173,12 +168,9 @@ actions: {
 - `changeRelationship` — updates trust/affection between characters
 - `levelUp` — increases experience/level
 
-### Path Conventions for JSON Patch
+### Low-Level JSON Patch Escape Hatch
 
-- Use `/field` for root-level fields
-- Use `/array/-` to append to arrays
-- Use `/object/field` for nested fields
-- Use `/array/0/field` for array element fields
+Actions should stay semantic and mutate `model` directly. `rp update '<json-patch>'` still exists for debugging, migration support, and rare low-level edits.
 
 ## Defining Views
 
@@ -188,17 +180,21 @@ Views are named functions that compress model data into useful context. Agents c
 views: {
   summary({ model }) {
     return {
-      profile: model.profile,
-      mood: model.mood,
-      pinnedMemories: model.memories.filter(m => m.pinned)
+      result: {
+        profile: model.profile,
+        mood: model.mood,
+        pinnedMemories: model.memories.filter(m => m.pinned)
+      }
     };
   },
 
   characterBackground({ model }) {
     return {
-      character: model.profile,
-      currentMood: model.mood.label,
-      importantFacts: model.memories.filter(m => m.pinned).map(m => m.text)
+      result: {
+        character: model.profile,
+        currentMood: model.mood.label,
+        importantFacts: model.memories.filter(m => m.pinned).map(m => m.text)
+      }
     };
   }
 }
@@ -207,7 +203,7 @@ views: {
 ### View Principles
 
 1. **Prefer pure projections** — most views should only read model data
-2. **Return whatever structure makes sense** — views aren't validated by Zod
+2. **Return `result` with whatever structure makes sense** — view result payloads aren't validated by Zod
 3. **Curate for the agent** — think about what context matters for the next response
 4. **Use meaningful names** — `world-background`, `mio-speech-style`, `summary`, `current-mood`
 5. **Use side effects deliberately** — if a view mutates model data, keep it small and schema-valid
@@ -294,8 +290,8 @@ rp action <name> --schema  # What inputs an action expects
 
 ## Common Pitfalls to Avoid
 
-1. **Don't expose raw JSON Patch in actions** — use semantic action names
-2. **Don't validate view output** — views return arbitrary JSON
+1. **Don't expose raw JSON Patch in actions** — use semantic action names and direct model mutation
+2. **Don't validate view result payloads** — views return arbitrary JSON inside `result`
 3. **Don't hide major state changes in views** — use actions for intentional story events
 4. **Don't forget to increment version** — when schema changes
 5. **Don't skip `--reason`** in examples — it models good agent behavior
@@ -365,15 +361,14 @@ export default defineModule({
         label: z.string(),
         energy: z.number().optional()
       }),
-      run({ input, ctx }) {
-        const patch = [{ op: "add", path: "/mood/label", value: input.label }];
+      run({ model, input }) {
+        model.mood.label = input.label;
         if (input.energy !== undefined) {
-          patch.push({ op: "add", path: "/mood/energy", value: input.energy });
+          model.mood.energy = input.energy;
         }
         return {
-          patch,
           reason: `Mood changed to ${input.label}.`,
-          message: "Mood updated."
+          result: "Mood updated."
         };
       }
     }
@@ -382,9 +377,11 @@ export default defineModule({
   views: {
     summary({ model }) {
       return {
-        name: model.name,
-        mood: model.mood,
-        memoryCount: model.memories.length
+        result: {
+          name: model.name,
+          mood: model.mood,
+          memoryCount: model.memories.length
+        }
       };
     }
   }

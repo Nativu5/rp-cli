@@ -62,6 +62,7 @@ The creator exposes semantic actions:
 - `setWear` / `removeWear`: manage clothing slots.
 
 These actions are intentionally higher-level than raw JSON Patch. An agent can call `setMood` without knowing exactly how mood is stored.
+Internally, actions mutate a validated model clone and return a `result` for the CLI to print.
 
 The module also exposes views:
 
@@ -89,7 +90,7 @@ rp action setMood '{"label":"happy","valence":0.8}'
 rp action setLevel '{"level":5}'
 
 # Level up
-rp action levelUp
+rp action levelUp '{}'
 
 # Update clothing
 rp action setWear '{"top":"blue blouse","bottom":"gray skirt","accessory":"silver hairpin"}'
@@ -106,6 +107,8 @@ rp view MioMood
 # Read raw model
 rp model
 ```
+
+Action and view commands print their `result` directly by default. For a stable JSON envelope, add `--output json`.
 
 ## Discovery
 

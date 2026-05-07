@@ -1,4 +1,5 @@
 import { toJSONSchema } from "zod";
+import { compare as compareJsonPatch } from "fast-json-patch";
 import { createRuntimeContext, findAction, runAction, validateActionInput } from "./action.js";
 import { RpError } from "./errors.js";
 import { appendJsonLogEntry, hashModel, readJsonLogEntries } from "./log.js";
@@ -86,13 +87,7 @@ export async function runActionOperation(input: {
   actionInput: unknown;
   dryRun?: boolean;
   reason?: string;
-}): Promise<{
-  result: null | {
-    patch: JsonPatch;
-    model: unknown;
-  };
-  message?: string;
-}> {
+}): Promise<{ result?: unknown }> {
   const module = await loadModule(input.paths.modulePath);
   const action = findAction(module.actions, input.name);
   const actionInput = validateActionInput(action, input.actionInput);
@@ -100,6 +95,7 @@ export async function runActionOperation(input: {
   return withModelLock(input.paths, async () => {
     const envelope = validateModelFile(module, await readModelFile(input.paths.modelPath));
     const ctx = createRuntimeContext();
+    const modelHashBefore = hashModel(envelope.model);
     const result = await runAction({
       action,
       model: envelope.model,
@@ -107,16 +103,15 @@ export async function runActionOperation(input: {
       meta: envelope.rp,
       ctx
     });
+    const nextModel = validateRoleModel(module, result.model);
+    const modelHashAfter = hashModel(nextModel);
 
-    if (result.patch.length === 0) {
-      return {
-        result: null,
-        ...(result.message === undefined ? {} : { message: result.message })
-      };
+    if (modelHashAfter === modelHashBefore) {
+      return result.result === undefined ? {} : { result: result.result };
     }
 
-    const nextModel = validateRoleModel(module, applyJsonPatch(envelope.model, result.patch));
     const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
+    const patch = compareJsonPatch(envelope.model as object, nextModel as object) as JsonPatch;
 
     if (!input.dryRun) {
       await writeJsonFileAtomic(input.paths.modelPath, nextEnvelope);
@@ -127,21 +122,14 @@ export async function runActionOperation(input: {
         name: input.name,
         ...(input.reason === undefined ? {} : { reason: input.reason }),
         ...(result.reason === undefined ? {} : { actionReason: result.reason }),
-        ...(result.message === undefined ? {} : { message: result.message }),
         input: actionInput,
-        patch: result.patch,
-        modelHashBefore: hashModel(envelope.model),
-        modelHashAfter: hashModel(nextModel)
+        patch,
+        modelHashBefore,
+        modelHashAfter
       });
     }
 
-    return {
-      result: {
-        patch: result.patch,
-        model: nextModel
-      },
-      ...(result.message === undefined ? {} : { message: result.message })
-    };
+    return result.result === undefined ? {} : { result: result.result };
   });
 }
 
@@ -192,31 +180,32 @@ export async function runViewOperation(input: {
   name?: string;
   dryRun?: boolean;
   reason?: string;
-}): Promise<unknown> {
+}): Promise<{ result?: unknown }> {
   const module = await loadModule(input.paths.modulePath);
   const view = findView(module.views, input.name);
 
   return withModelLock(input.paths, async () => {
     const envelope = validateModelFile(module, await readModelFile(input.paths.modelPath));
+    const ctx = createRuntimeContext();
     const modelHashBefore = hashModel(envelope.model);
     const result = await runView({
       view: view.run,
       model: envelope.model,
-      meta: envelope.rp
+      meta: envelope.rp,
+      ctx
     });
 
     if (hashModel(result.model) === modelHashBefore) {
-      return result.output;
+      return result.result === undefined ? {} : { result: result.result };
     }
 
     const nextModel = validateRoleModel(module, result.model);
     const modelHashAfter = hashModel(nextModel);
 
     if (modelHashAfter === modelHashBefore) {
-      return result.output;
+      return result.result === undefined ? {} : { result: result.result };
     }
 
-    const ctx = createRuntimeContext();
     const nextEnvelope = updateModelEnvelope(envelope, module, nextModel, ctx.now());
 
     if (!input.dryRun) {
@@ -227,12 +216,13 @@ export async function runViewOperation(input: {
         type: "view",
         name: view.name,
         ...(input.reason === undefined ? {} : { reason: input.reason }),
+        ...(result.reason === undefined ? {} : { viewReason: result.reason }),
         modelHashBefore,
         modelHashAfter
       });
     }
 
-    return result.output;
+    return result.result === undefined ? {} : { result: result.result };
   });
 }
 

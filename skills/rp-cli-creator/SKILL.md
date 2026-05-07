@@ -288,6 +288,8 @@ rp model --schema    # What the model looks like
 rp action <name> --schema  # What inputs an action expects
 ```
 
+`rp action --list` and `rp view --list` print readable `name: description` lines by default. Add `--output json` when an agent needs a machine-readable JSON array.
+
 ## Common Pitfalls to Avoid
 
 1. **Don't expose raw JSON Patch in actions** — use semantic action names and direct model mutation

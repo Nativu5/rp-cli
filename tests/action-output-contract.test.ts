@@ -12,6 +12,66 @@ afterEach(() => {
 });
 
 describe("action output contract", () => {
+  it("prints action lists as readable text by default", async () => {
+    const workspace = await createWorkspace();
+
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "action", "--list"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toBe(
+      ["setValue: Set the value.", "increment: Increment count.", "breakSchema: Break schema."].join("\n") + "\n"
+    );
+  });
+
+  it("keeps action lists as JSON when --output=json is used", async () => {
+    const workspace = await createWorkspace();
+
+    const result = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--model",
+      workspace.modelPath,
+      "--output",
+      "json",
+      "action",
+      "--list"
+    ]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(JSON.parse(result.stdout)).toEqual([
+      { name: "setValue", description: "Set the value." },
+      { name: "increment", description: "Increment count." },
+      { name: "breakSchema", description: "Break schema." }
+    ]);
+  });
+
+  it("prints view lists as readable text by default and omits missing descriptions", async () => {
+    const workspace = await createWorkspace();
+
+    const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "--list"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toBe("summary\n");
+  });
+
+  it("keeps view lists as JSON when --output=json is used", async () => {
+    const workspace = await createWorkspace();
+
+    const result = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--model",
+      workspace.modelPath,
+      "--output",
+      "json",
+      "view",
+      "--list"
+    ]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(JSON.parse(result.stdout)).toEqual([{ name: "summary" }]);
+  });
+
   it("lets actions mutate model directly and prints only string result by default", async () => {
     const workspace = await createWorkspace();
     await initWorkspace(workspace);

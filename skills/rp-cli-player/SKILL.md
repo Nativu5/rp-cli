@@ -53,7 +53,7 @@ RP CLI follows the **Model-View-Update (MVU)** pattern:
 3. Record changes:
 
 - Use `rp action <name> '<json>' --reason "..."` to make sure your changes are properly recorded in the state.
-- Action and view commands print the creator-defined result by default. Use `--output json` when you need a stable JSON envelope.
+- Action and view commands print the creator-defined result by default. List commands print readable `name: description` lines. Use `--output json` when you need a stable JSON envelope or list array.
 
 ## Best Practices
 

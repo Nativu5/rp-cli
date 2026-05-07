@@ -142,7 +142,22 @@ describe("write commands", () => {
     const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "action", "--list"]);
 
     expect(result.exitCode).toBeUndefined();
-    expect(result.json).toEqual(
+    expect(result.stdout).toContain("setValue: Set the value.\n");
+    expect(result.stdout).toContain("remember: Remember text.\n");
+
+    const jsonResult = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--model",
+      workspace.modelPath,
+      "--output",
+      "json",
+      "action",
+      "--list"
+    ]);
+
+    expect(jsonResult.exitCode).toBeUndefined();
+    expect(jsonResult.json).toEqual(
       expect.arrayContaining([
         { name: "setValue", description: "Set the value." },
         { name: "remember", description: "Remember text." }

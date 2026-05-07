@@ -38,7 +38,7 @@ Node.js `>=20.0.0` is required. Creators should prefer `.js` or `.mjs` modules f
 
 By default, `rp` looks for `./rp.module.ts` and `./rp.module.js` next to `./rp.model.json`. You can also pass `--module` / `--model`, or set `RP_MODULE` / `RP_MODEL`.
 
-Action and view commands print only the creator-defined `result` by default. Use `--output json` when you need a stable JSON envelope such as `{ "result": ... }`.
+Action and view commands print only the creator-defined `result` by default. Discovery commands such as `rp action --list` and `rp view --list` print one readable item per line. Use `--output json` when you need stable JSON, such as `{ "result": ... }` or a list array.
 
 ## Repository Guide
 

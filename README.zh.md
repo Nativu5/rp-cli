@@ -40,7 +40,7 @@ rp \
 
 默认情况下，`rp` 会在 `./rp.model.json` 旁寻找 `./rp.module.ts` 和 `./rp.module.js`。也可以传入 `--module` / `--model`，或设置 `RP_MODULE` / `RP_MODEL`。
 
-Action 和 view 命令默认只打印创作者设置的 `result`。如果需要稳定 JSON envelope，例如 `{ "result": ... }`，可以使用 `--output json`。
+Action 和 view 命令默认只打印创作者设置的 `result`。`rp action --list` 和 `rp view --list` 这类发现命令默认每行打印一个可读条目。如果需要稳定 JSON，例如 `{ "result": ... }` 或列表数组，可以使用 `--output json`。
 
 ## 仓库导览
 

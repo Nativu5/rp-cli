@@ -27,7 +27,7 @@ describe("creator experience", () => {
 
     const actions = await runCli(["--module", workspace.modulePath, "action", "--list"]);
     expect(actions.exitCode).toBeUndefined();
-    expect(actions.json).toEqual([{ name: "setTitle", description: "Set the story title." }]);
+    expect(actions.stdout).toBe("setTitle: Set the story title.\n");
 
     const inputSchema = await runCli(["--module", workspace.modulePath, "action", "setTitle", "--schema"]);
     expect(inputSchema.exitCode).toBeUndefined();

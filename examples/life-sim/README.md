@@ -108,7 +108,7 @@ rp view MioMood
 rp model
 ```
 
-Action and view commands print their `result` directly by default. For a stable JSON envelope, add `--output json`.
+Action and view commands print their `result` directly by default. Discovery lists print one readable item per line. For stable JSON output, add `--output json`.
 
 ## Discovery
 

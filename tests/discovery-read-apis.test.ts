@@ -18,7 +18,30 @@ describe("discovery and read APIs", () => {
     const result = await runCli(["--module", workspace.modulePath, "--model", workspace.modelPath, "view", "--list"]);
 
     expect(result.exitCode).toBeUndefined();
-    expect(result.json).toEqual([
+    expect(result.stdout).toBe(
+      [
+        "default: Full view.",
+        "brief",
+        "debug: Debug view.",
+        "explode: Throw an error.",
+        "mutate: Mutate model directly.",
+        "breakSchema: Mutate model into an invalid shape."
+      ].join("\n") + "\n"
+    );
+
+    const jsonResult = await runCli([
+      "--module",
+      workspace.modulePath,
+      "--model",
+      workspace.modelPath,
+      "--output",
+      "json",
+      "view",
+      "--list"
+    ]);
+
+    expect(jsonResult.exitCode).toBeUndefined();
+    expect(jsonResult.json).toEqual([
       { name: "default", description: "Full view." },
       { name: "brief" },
       { name: "debug", description: "Debug view." },

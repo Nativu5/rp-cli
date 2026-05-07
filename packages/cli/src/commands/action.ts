@@ -7,7 +7,7 @@ import {
 } from "@rp-cli/core/internal";
 import { readJsonInput } from "../jsonInput.js";
 import { runCommand } from "../commandRunner.js";
-import { writeJson, writeResult } from "../output.js";
+import { writeJson, writeList, writeResult } from "../output.js";
 
 export function registerActionCommand(program: Command): void {
   program
@@ -27,7 +27,7 @@ export function registerActionCommand(program: Command): void {
       ) => {
         await runCommand(command, async ({ paths, output, dryRun, reason }) => {
           if (options.list) {
-            writeJson(await listActionSummariesOperation({ paths }));
+            writeList(await listActionSummariesOperation({ paths }), output);
             return;
           }
 

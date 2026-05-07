@@ -115,7 +115,12 @@ describe("life-sim example", () => {
 
     const actions = await runLifeSim(workspace.modelPath, ["action", "--list"]);
     expect(actions.exitCode).toBeUndefined();
-    expect(actions.json).toEqual(
+    expect(actions.stdout).toContain("setMood: Update current mood.\n");
+    expect(actions.stdout).toContain("removeWear: Remove a worn item.\n");
+
+    const actionsJson = await runLifeSim(workspace.modelPath, ["--output", "json", "action", "--list"]);
+    expect(actionsJson.exitCode).toBeUndefined();
+    expect(actionsJson.json).toEqual(
       expect.arrayContaining([
         { name: "setMood", description: "Update current mood." },
         { name: "setLevel", description: "Set the character level." },
@@ -127,7 +132,11 @@ describe("life-sim example", () => {
 
     const views = await runLifeSim(workspace.modelPath, ["view", "--list"]);
     expect(views.exitCode).toBeUndefined();
-    expect(views.json.map((view: any) => view.name)).toEqual(["summary", "MioBackground", "MioMood"]);
+    expect(views.stdout).toBe("summary\nMioBackground\nMioMood\n");
+
+    const viewsJson = await runLifeSim(workspace.modelPath, ["--output", "json", "view", "--list"]);
+    expect(viewsJson.exitCode).toBeUndefined();
+    expect(viewsJson.json.map((view: any) => view.name)).toEqual(["summary", "MioBackground", "MioMood"]);
 
     const actionSchema = await runLifeSim(workspace.modelPath, ["action", "setMood", "--schema"]);
     expect(actionSchema.exitCode).toBeUndefined();

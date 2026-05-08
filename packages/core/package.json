@@ -1,6 +1,6 @@
 {
   "name": "@rp-cli/core",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Creator API and runtime internals for RP CLI roleplay modules.",
   "keywords": [
     "rp-cli",
